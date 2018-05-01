@@ -5,19 +5,18 @@
 let {interfaces: Ci, utils: Cu, classes: Cc} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 const dump = Cu.reportError;
 
-const XMLHttpRequest = Components.Constructor("@mozilla.org/xmlextras/xmlhttprequest;1");
-
-const kBreachListURL = "https://stage.haveibeenpwned.com/api/v2/breaches";
+const kBreachListURL = "https://haveibeenpwned.com/api/v2/breaches";
 const kDefaultServerURL = "http://localhost:6060";
 
 function initSiteList() {
-  let xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      let sites = JSON.parse(xhr.responseText);
+      const sites = JSON.parse(xhr.responseText);
       siteSet = new Set(sites.map(site => site.Domain));
       siteSet.add("haveibeenpwned.com");
       startObserving();
