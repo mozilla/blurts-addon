@@ -1,0 +1,14 @@
+[
+  {
+    "namespace": "blurts",
+    "functions": [
+      {
+        "name": "start",
+        "type": "function",
+        "description": "Starts monitoring for visits to breached sites",
+        "async": true,
+        "parameters": []
+      }
+    ]
+  }
+]

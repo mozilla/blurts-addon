@@ -1,0 +1,1 @@
+browser.blurts.start();

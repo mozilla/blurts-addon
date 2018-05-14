@@ -1,22 +1,20 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this file,
-* You can obtain one at http://mozilla.org/MPL/2.0/. */
+const { utils: Cu } = Components;
 
-let {interfaces: Ci, utils: Cu, classes: Cc} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 const dump = Cu.reportError;
 
-const kBreachListURL = "https://haveibeenpwned.com/api/v2/breaches";
+Components.utils.importGlobalProperties(["XMLHttpRequest"]);
+
+const kBreachListURL = "https://stage.haveibeenpwned.com/api/v2/breaches";
 const kDefaultServerURL = "http://localhost:6060";
 
 function initSiteList() {
-  const xhr = new XMLHttpRequest();
+  let xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      const sites = JSON.parse(xhr.responseText);
+      let sites = JSON.parse(xhr.responseText);
       siteSet = new Set(sites.map(site => site.Domain));
       siteSet.add("haveibeenpwned.com");
       startObserving();
@@ -35,6 +33,7 @@ var tpl = {
 }
 
 function startObserving() {
+  Cu.reportError("starting to observe!");
   EveryWindow.registerCallback(
     "breach-alerts",
     (win) => {
@@ -129,9 +128,6 @@ function shutdown(aData, aReason) {
   stopObserving();
 }
 
-function install(aData, aReason) {}
-function uninstall(aData, aReason) {}
-
 var EveryWindow = {
   _callbacks: new Map(),
   _initialized: false,
@@ -188,3 +184,15 @@ var EveryWindow = {
     }
   },
 };
+
+this.blurts = class extends ExtensionAPI {
+  getAPI(context) {
+    return {
+      blurts: {
+        async start() {
+          startup();
+        }
+      }
+    };
+  }
+}
