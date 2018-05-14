@@ -3,12 +3,9 @@ const { utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-const dump = Cu.reportError;
-
 Components.utils.importGlobalProperties(["XMLHttpRequest"]);
 
 const kBreachListURL = "https://stage.haveibeenpwned.com/api/v2/breaches";
-const kDefaultServerURL = "http://localhost:6060";
 
 function initSiteList() {
   let xhr = new XMLHttpRequest();
@@ -33,7 +30,6 @@ var tpl = {
 }
 
 function startObserving() {
-  Cu.reportError("starting to observe!");
   EveryWindow.registerCallback(
     "breach-alerts",
     (win) => {
@@ -164,6 +160,11 @@ this.blurts = class extends ExtensionAPI {
       blurts: {
         async start() {
           startup();
+          context.extension.callOnClose({
+            close: () => {
+              shutdown();
+            }
+          });
         }
       }
     };
