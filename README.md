@@ -15,4 +15,9 @@ Once you've installed the add-on, visit a site that is in [the list of breached
 sites on HIBP](https://haveibeenpwned.com/PwnedWebsites).
 
 ## Building
-1. `./build.sh`
+Use
+[`web-ext`](https://developer.mozilla.org/Add-ons/WebExtensions/Getting_started_with_web-ext)
+to build the add-on:
+```
+web-ext build
+```
