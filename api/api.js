@@ -63,20 +63,28 @@ function warnIfNeeded(browser, host) {
   warnedHostSet.add(host);
 
   let panel = doc.defaultView.PopupNotifications.panel;
-  panel.addEventListener("popupshown", function() {
+  panel.addEventListener("popupshowing", function() {
     let n = doc.getElementById("breach-alerts-notification");
-    let box = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-body");
+    let body = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-body");
+    let box = body.querySelector(".blurtsbox");
+    if (box) {
+      box.remove();
+    }
+    box = doc.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "vbox");
     let elt = doc.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "description");
-    elt.setAttribute("value", "This website has been breached!");
+    elt.setAttribute("anonid", "maindesc");
+    elt.appendChild(doc.createTextNode("This website has been breached!"));
     elt.setAttribute("style", "font-size: 1.3rem;");
     box.appendChild(elt);
     elt = doc.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "description");
-    elt.setAttribute("value", "Quick information about what a breach is, what it means and how it affects people.");
+    elt.appendChild(doc.createTextNode("Quick information about what a breach is, what it means and how it affects people."));
     box.appendChild(elt);
     elt = doc.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "description");
-    elt.setAttribute("value", "Why you should go to the website and scan all of your usernames. Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+    elt.appendChild(doc.createTextNode("Why you should go to the website and scan all of your usernames. Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
     box.appendChild(elt);
-  }, { once: true });
+    box.setAttribute("class", "blurtsbox");
+    body.appendChild(box);
+  });
 
   doc.defaultView.PopupNotifications.show(
     browser, "breach-alerts", "",
