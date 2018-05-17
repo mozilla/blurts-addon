@@ -2,8 +2,7 @@ const { utils: Cu } = Components;
 
 
 Cu.import("resource://gre/modules/Services.jsm");
-
-Components.utils.importGlobalProperties(["XMLHttpRequest"]);
+Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 const kBreachListURL = "https://stage.haveibeenpwned.com/api/v2/breaches";
 
