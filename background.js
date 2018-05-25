@@ -38,10 +38,8 @@ const studySetup = {
 }
 
 async function run() {
-  console.log("run, studySetup: ", studySetup);
-  console.log("run, browser.study: ", browser.study);
-  const study = await browser.study.setup(studySetup);
-  console.log("background.js, study: ", study);
+  const studyInfo = await browser.study.setup(studySetup);
+  browser.blurts.start(studyInfo);
 }
 
 run();

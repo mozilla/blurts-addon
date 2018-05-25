@@ -165,8 +165,8 @@ this.blurts = class extends ExtensionAPI {
   getAPI(context) {
     return {
       blurts: {
-        async start(study) {
-          console.log("study: ", study);
+        async start(studyInfo) {
+          // TODO: use studyInfo to determine which doorhanger variation to show
           startup();
           context.extension.callOnClose({
             close: () => {
