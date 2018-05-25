@@ -165,7 +165,7 @@ this.blurts = class extends ExtensionAPI {
   getAPI(context) {
     return {
       blurts: {
-        async start() {
+        async start(study) {
           startup();
           context.extension.callOnClose({
             close: () => {

@@ -1,1 +1,1 @@
-browser.blurts.start();
+browser.blurts.start(browser.study);
