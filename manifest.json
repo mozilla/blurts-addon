@@ -1,4 +1,10 @@
 {
+  "applications": {
+    "gecko": {
+      "id": "monitor@firefox.com",
+      "strict_min_version": "60.0"
+    }
+  },
   "manifest_version": 2,
   "name": "Firefox Monitor",
   "version": "0.01",
@@ -17,6 +23,14 @@
         "scopes": ["addon_parent"],
         "script": "api/api.js",
         "paths": [["blurts"]]
+      }
+    },
+    "study": {
+      "schema": "./privileged/study/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "./privileged/study/api.js",
+        "paths": [["study"]]
       }
     }
   }

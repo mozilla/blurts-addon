@@ -7,7 +7,14 @@
         "type": "function",
         "description": "Starts monitoring for visits to breached sites",
         "async": true,
-        "parameters": []
+        "parameters": [
+            {
+                "name": "study",
+                "description": "The shield study.",
+                "type": "object",
+                "additionalProperties": true
+            }
+        ]
       }
     ]
   }
