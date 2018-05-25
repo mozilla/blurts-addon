@@ -1,26 +1,22 @@
 const studySetup = {
   activeExperimentName: browser.runtime.id,
   studyType: "shield",
-  allowEnroll: true,
-
-  telemetry: {
-    send: true,
-    removeTestingFlag: false,
+  expire: {
+    days: 7,
   },
 
   endings: {
     "user-disable": {
-      baseUrls: [""],
+      baseUrls: ["https://monitor.firefox.com/"],
     },
-    ineligible: {
-      baseUrls: [""],
+    "ineligible": {
+      baseUrls: ["https://monitor.firefox.com/"],
     },
-    expired: {
-      baseUrls: [""],
+    "expired": {
+      baseUrls: ["https://monitor.firefox.com/"],
     },
-    dataPermissionsRevoked: {
-      baseUrls: [""],
-      category: "ended-neutral",
+    "dataPermissionsRevoked": {
+      baseUrls: ["https://monitor.firefox.com/"],
     },
   },
 
@@ -33,24 +29,19 @@ const studySetup = {
       name: "variation 2",
       weight: 1,
     },
-    {
-      name: "variation 3",
-      weight: 1,
-    },
-    {
-      name: "variation 4",
-      weight: 1,
-    },
   ],
 
-  expire: {
-    days: 7,
+  telemetry: {
+    send: true,
+    removeTestingFlag: false,
   },
 }
 
 async function run() {
+  console.log("run, studySetup: ", studySetup);
+  console.log("run, browser.study: ", browser.study);
   const study = await browser.study.setup(studySetup);
-  browser.blurts.start(study);
+  console.log("background.js, study: ", study);
 }
 
 run();
