@@ -34,7 +34,9 @@ function startObserving() {
     (win) => {
       win.gBrowser.addTabsProgressListener(tpl);
     },
-    () => {}
+    (win) => {
+      win.gBrowser.removeTabsProgressListener(tpl);
+    }
   );
   observerAdded = true;
 }

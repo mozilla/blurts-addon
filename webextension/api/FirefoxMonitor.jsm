@@ -35,7 +35,9 @@ function startObserving() {
     (win) => {
       win.gBrowser.addTabsProgressListener(tpl);
     },
-    () => {}
+    (win) => {
+      win.gBrowser.removeTabsProgressListener(tpl);
+    }
   );
   observerAdded = true;
 }
@@ -440,13 +442,14 @@ let EveryWindow = {
 };
 
 const FirefoxMonitor = {
-  startup(aExtension) {
+  init(aExtension) {
     extension = aExtension;
     initSiteList();
-  },
-
-  shutdown() {
-    stopObserving();
+    aExtension.callOnClose({
+      close: () => {
+        stopObserving();
+      }
+    });
   },
 };
 

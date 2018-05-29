@@ -6,12 +6,7 @@ this.blurts = class extends ExtensionAPI {
       blurts: {
         async start() {
           Cu.import(context.extension.getURL("api/FirefoxMonitor.jsm"));
-          FirefoxMonitor.startup(context.extension);
-          context.extension.callOnClose({
-            close: () => {
-              FirefoxMonitor.shutdown();
-            }
-          });
+          FirefoxMonitor.init(context.extension);
         }
       }
     };
