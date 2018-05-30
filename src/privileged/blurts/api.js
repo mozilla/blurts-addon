@@ -18,8 +18,9 @@ this.blurts = class extends ExtensionAPI {
             let listener = (id) => {
               fire.sync(id);
             };
-            Cu.reportError(Object.keys(FirefoxMonitor));
+
             FirefoxMonitor.addTelemetryListener(listener);
+
             return () => {
               FirefoxMonitor.removeTelemetryListener(listener);
             };

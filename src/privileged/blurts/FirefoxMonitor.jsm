@@ -10,26 +10,52 @@ const imageDataURIs = {
 
 let gExtension;
 
-function initSiteList(aExtension) {
-  fetch(gExtension.getURL("breaches.json")).then(function(response) {
-    return response.json();
-  }).then(function(sites) {
-    for (let site of sites) {
-      domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: site.LogoFilename });
+const FirefoxMonitor = {
+  init(aExtension) {
+    gExtension = aExtension;
+
+    fetch(gExtension.getURL("breaches.json")).then(function(response) {
+      return response.json();
+    }).then(function(sites) {
+      for (let site of sites) {
+        domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: site.LogoFilename });
+      }
+      startObserving();
+      aExtension.callOnClose({
+        close: () => {
+          stopObserving();
+        }
+      });
+    });
+  },
+
+  telemetryListeners: new Set(),
+
+  addTelemetryListener(aListener) {
+    this.telemetryListeners.add(aListener);
+  },
+
+  removeTelemetryListener(aListener) {
+    this.telemetryListeners.delete(aListener);
+  },
+
+  notifyTelemetryListeners(id) {
+    for (let cb of this.telemetryListeners) {
+      cb(id);
     }
-    startObserving();
-  });
-}
+  },
+};
+
 
 let observerAdded = false;
 
-let tpl = {
-  onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation) {
-    warnIfNeeded(aBrowser, aLocation.host);
-  }
-}
-
 function startObserving() {
+  let tpl = {
+    onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation) {
+      warnIfNeeded(aBrowser, aLocation.host);
+    }
+  }
+
   EveryWindow.registerCallback(
     "breach-alerts",
     (win) => {
@@ -438,30 +464,6 @@ let EveryWindow = {
     let win = aEvent.target;
     for (let c of this._callbacks.values()) {
       c.uninit(win);
-    }
-  },
-};
-
-const FirefoxMonitor = {
-  init(aExtension) {
-    gExtension = aExtension;
-    initSiteList();
-    aExtension.callOnClose({
-      close: () => {
-        stopObserving();
-      }
-    });
-  },
-  telemetryListeners: new Set(),
-  addTelemetryListener(aListener) {
-    this.telemetryListeners.add(aListener);
-  },
-  removeTelemetryListener(aListener) {
-    this.telemetryListeners.delete(aListener);
-  },
-  notifyTelemetryListeners(id) {
-    for (let cb of this.telemetryListeners) {
-      cb(id);
     }
   },
 };
