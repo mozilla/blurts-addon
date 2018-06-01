@@ -10,7 +10,7 @@ const imageDataURIs = {
 
 let gExtension;
 
-const FirefoxMonitor = {
+this.FirefoxMonitor = {
   init(aExtension) {
     gExtension = aExtension;
 
