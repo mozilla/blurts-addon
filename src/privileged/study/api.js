@@ -1039,15 +1039,6 @@ this.study = class extends ExtensionAPI {
     studyUtils.reset();
 
     return {
-      blurts: {
-        async start() {
-          Cu.reportError("test");
-          Cu.reportError(Object.keys(this.study));
-          Cu.import(context.extension.getURL("privileged/study/FirefoxMonitor.jsm"));
-          FirefoxMonitor.init(context.extension);
-        }
-      },
-
       study: {
         /** Attempt an setup/enrollment, with these effects:
          *
