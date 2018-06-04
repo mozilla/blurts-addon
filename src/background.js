@@ -1,2 +1,2 @@
 browser.blurts.start();
-browser.blurts.onTelemetryEvent.addListener(console.log);
+browser.blurts.onTelemetryEvent.addListener((id) => console.log(id));

@@ -52,6 +52,7 @@ let observerAdded = false;
 function startObserving() {
   let tpl = {
     onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation) {
+      if (!aLocation.host) return;
       warnIfNeeded(aBrowser, aLocation.host);
     }
   }
@@ -116,7 +117,6 @@ function warnIfNeeded(browser, host) {
   doc.defaultView.PopupNotifications.show(
     browser, "breach-alerts", "",
     null, ui.primaryAction, ui.secondaryActions, {persistent: true});
-  FirefoxMonitor.notifyTelemetryListeners("hello, world, warned!");
 }
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";

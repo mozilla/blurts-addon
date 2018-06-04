@@ -5,31 +5,27 @@ XPCOMUtils.defineLazyModuleGetter(this, "ExtensionCommon",
 
 this.blurts = class extends ExtensionAPI {
   getAPI(context) {
-    let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
-                           .getService(Components.interfaces.mozIJSSubScriptLoader);
-    let FirefoxMonitorContainer = {};
-    loader.loadSubScript(context.extension.getURL("privileged/blurts/FirefoxMonitor.jsm"), FirefoxMonitorContainer);
+    Cu.import(context.extension.getURL("privileged/blurts/FirefoxMonitor.jsm"));
     return {
       blurts: {
         async start() {
-          FirefoxMonitorContainer.FirefoxMonitor.init(context.extension);
+          FirefoxMonitor.init(context.extension);
         },
 
-        onTelemetryEvent: new ExtensionCommon.EventManager({
+        onTelemetryEvent: new ExtensionCommon.EventManager(
           context,
-          name: "blurts.onTelemetryEvent",
-          register: (fire) => {
+          "blurts.onTelemetryEvent",
+          (fire) => {
             let listener = (id) => {
-              fire.sync(id);
+              fire.async(id);
             };
 
-            FirefoxMonitorContainer.FirefoxMonitor.addTelemetryListener(listener);
+            FirefoxMonitor.addTelemetryListener(listener);
 
             return () => {
-              FirefoxMonitorContainer.FirefoxMonitor.removeTelemetryListener(listener);
+              FirefoxMonitor.removeTelemetryListener(listener);
             };
-          },
-        }).api(),
+          }).api(),
       }
     };
   }
