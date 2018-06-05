@@ -86,7 +86,7 @@ function warnIfNeeded(browser, host) {
     host = host.substring(4);
   }
 
-  if (blurtsDisabled || warnedHostSet.has(host) || !domainMap.has(host)) {
+  if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
     return;
   }
 
