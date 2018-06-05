@@ -316,6 +316,12 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("style", "-moz-appearance: none; height: 2.5rem; padding: 0.5rem; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
+        elt.addEventListener("keydown", function listener(event) {
+          if (event.key !== "Enter") return;
+          elt.removeEventListener("keydown", listener);
+          let popupNotification = doc.getElementById("breach-alerts-notification");
+          doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
+        });
         this._textbox = elt;
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "checkbox");
@@ -331,7 +337,15 @@ let UIFactory = [
       accessKey: "f",
       callback: function() {
         FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit`);
-        doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + this._textbox.value + "&signup=" + this._checkbox.checked, "tab");
+        let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
+          createInstance(Ci.nsIStringInputStream);
+        stringStream.data = `email=${this._textbox.value}&signup=${this._checkbox.checked}`;
+
+        let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
+          createInstance(Ci.nsIMIMEInputStream);
+        postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        postData.setData(stringStream);
+        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -340,6 +354,7 @@ let UIFactory = [
         accessKey: "d",
         callback: () => {
           FirefoxMonitor.notifyTelemetryListeners(`variant_3_dismiss`);
+          showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
@@ -347,6 +362,7 @@ let UIFactory = [
         callback: () => {
           FirefoxMonitor.notifyTelemetryListeners(`variant_3_dismiss_permanent`);
           blurtsDisabled = true;
+          showSurvey(browser, true);
         },
       }
     ];
