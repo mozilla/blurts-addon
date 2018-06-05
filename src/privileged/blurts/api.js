@@ -12,8 +12,8 @@ this.blurts = class extends ExtensionAPI {
                                                   FirefoxMonitorContainer);
     return {
       blurts: {
-        async start() {
-          FirefoxMonitorContainer.FirefoxMonitor.init(context.extension);
+        async start(variation) {
+          FirefoxMonitorContainer.FirefoxMonitor.init(context.extension, variation);
         },
 
         onTelemetryEvent: new ExtensionCommon.EventManager(

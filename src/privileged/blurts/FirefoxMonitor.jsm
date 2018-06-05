@@ -11,8 +11,9 @@ const imageDataURIs = {
 let gExtension;
 
 this.FirefoxMonitor = {
-  init(aExtension) {
+  init(aExtension, aVariation) {
     gExtension = aExtension;
+    UI_VARIANT = parseInt(aVariation);
 
     fetch(gExtension.getURL("breaches.json")).then(function(response) {
       return response.json();
@@ -78,7 +79,7 @@ function stopObserving() {
 let domainMap = new Map();
 let warnedHostSet = new Set();
 let blurtsDisabled = false;
-const UI_VARIANT = 4;
+let UI_VARIANT;
 
 function warnIfNeeded(browser, host) {
   if (host.startsWith("www.")) {
@@ -319,7 +320,7 @@ let UIFactory = [
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "checkbox");
         elt.setAttribute("label", "Sign up for Firefox Monitor alerts");
-        elt.setAttribute("checked", "true");
+        elt.setAttribute("checked", "false");
         this._checkbox = elt;
         box.appendChild(elt);
         return box;
@@ -461,10 +462,12 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("style", "-moz-appearance: none; height: 2.5rem; padding: 0.5rem; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
-        elt.addEventListener("command", () => {
+        elt.addEventListener("keydown", function listener(event) {
+          if (event.key !== "Enter") return;
+          elt.removeEventListener("keydown", listener);
           let popupNotification = doc.getElementById("breach-alerts-notification");
           doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
-        }, { once: true });
+        });
         this._textbox = elt;
         box.appendChild(elt);
         return box;
@@ -483,11 +486,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab",
-        {
-          triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
-          postData,
-        });
+        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [

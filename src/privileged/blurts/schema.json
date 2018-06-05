@@ -7,7 +7,12 @@
         "type": "function",
         "description": "Starts monitoring for visits to breached sites",
         "async": true,
-        "parameters": []
+        "parameters": [
+          {
+            "name": "variation",
+            "type": "string"
+          }
+        ]
       }
     ],
     "events": [
