@@ -336,7 +336,11 @@ let UIFactory = [
       label: "Search Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit`);
+        if (this._checkbox.checked) {
+          FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit_checked`);
+        } else {
+          FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit`);
+        }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
         stringStream.data = `email=${this._textbox.value}&signup=${this._checkbox.checked}`;
