@@ -21,6 +21,10 @@ async function init() {
     },
     weightedVariations: [
       {
+        name: "0",
+        weight: 1,
+      },
+      {
         name: "1",
         weight: 1,
       },
@@ -34,10 +38,6 @@ async function init() {
       },
       {
         name: "4",
-        weight: 1,
-      },
-      {
-        name: "5",
         weight: 1,
       },
     ],
