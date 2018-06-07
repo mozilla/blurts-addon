@@ -96,11 +96,35 @@ function warnIfNeeded(browser, host) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
-  panel.addEventListener("popupshowing", () => {
-    if (doc.defaultView.gBrowser.selectedBrowser != browser) {
+
+  showPanel(browser, ui, "breach-alerts");
+}
+
+function showSurvey(browser, aWithEmail) {
+  let doc = browser.ownerDocument;
+
+  let panel = doc.defaultView.PopupNotifications.panel;
+  const ui = surveyFactory(aWithEmail, doc);
+
+  if (panel.hidden) {
+    showPanel(browser, ui, "breach-alerts-survey");
+    return;
+  }
+
+  panel.addEventListener("popuphidden", () => {
+    showPanel(browser, ui, "breach-alerts-survey");
+  }, { once: true });
+}
+
+function showPanel(browser, ui, notificationId) {
+  let doc = browser.ownerDocument;
+  let panel = doc.defaultView.PopupNotifications.panel;
+
+  let populatePanel = (event) => {
+    if (event !== "shown") {
       return;
     }
-    let n = doc.getElementById("breach-alerts-notification");
+    let n = doc.getElementById(notificationId + "-notification");
     let body = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-body");
     let box = body.querySelector(".blurtsbox");
     if (box) {
@@ -114,53 +138,11 @@ function warnIfNeeded(browser, host) {
     if (icon) {
       icon.remove();
     }
-  });
+  };
 
   doc.defaultView.PopupNotifications.show(
-    browser, "breach-alerts", "",
-    null, ui.primaryAction, ui.secondaryActions, {persistent: true});
-}
-
-function showSurvey(browser, aWithEmail) {
-  let doc = browser.ownerDocument;
-
-  let panel = doc.defaultView.PopupNotifications.panel;
-  const ui = surveyFactory(aWithEmail, doc)
-
-  function doIt() {
-    panel.addEventListener("popupshowing", () => {
-      if (doc.defaultView.gBrowser.selectedBrowser != browser) {
-        return;
-      }
-      let n = doc.getElementById("breach-alerts-survey-notification");
-      let body = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-body");
-      let box = body.querySelector(".blurtsbox");
-      if (box) {
-        box.remove();
-      }
-      box = ui.box;
-      box.setAttribute("class", "blurtsbox");
-      box.setAttribute("style", "font-size: 110%");
-      body.appendChild(box);
-      let icon = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-icon");
-      if (icon) {
-        icon.remove();
-      }
-    });
-
-    doc.defaultView.PopupNotifications.show(
-      browser, "breach-alerts-survey", "",
-      null, ui.primaryAction, ui.secondaryActions, {persistent: true});
-  }
-
-  if (panel.hidden) {
-    doIt();
-    return;
-  }
-
-  panel.addEventListener("popuphidden", () => {
-    doIt();
-  }, { once: true });
+    browser, notificationId, "",
+    null, ui.primaryAction, ui.secondaryActions, {persistent: true, eventCallback: populatePanel});
 }
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
