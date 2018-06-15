@@ -8,7 +8,7 @@
   },
   "applications": {
     "gecko": {
-      "id": "blurts@mozilla.org",
+      "id": "fxmonitor@shield.mozilla.org",
       "strict_min_version": "60.0"
     }
   },
