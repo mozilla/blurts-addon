@@ -10,10 +10,28 @@ const imageDataURIs = {
 
 let gExtension;
 
+function sha1(str) {
+  let converter =
+    Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+  converter.charset = "UTF-8";
+  let result = {};
+  let data = converter.convertToByteArray(str, result);
+  let ch = Components.classes["@mozilla.org/security/hash;1"]
+                     .createInstance(Components.interfaces.nsICryptoHash);
+  ch.init(ch.SHA1);
+  ch.update(data, data.length);
+  let hash = ch.finish(false);
+  function toHexString(charCode) {
+    return ("0" + charCode.toString(16)).slice(-2);
+  }
+  return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
+}
+
 this.FirefoxMonitor = {
   init(aExtension, aVariation) {
     gExtension = aExtension;
-    UI_VARIANT = parseInt(aVariation);
+    UI_VARIANT = 1; //parseInt(aVariation);
 
     fetch(gExtension.getURL("breaches.json")).then(function(response) {
       return response.json();
@@ -242,7 +260,7 @@ let UIFactory = [
         FirefoxMonitor.notifyTelemetryListeners(`variant_2_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `email=${this._textbox.value}`;
+        stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
 
         let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
           createInstance(Ci.nsIMIMEInputStream);
@@ -325,7 +343,7 @@ let UIFactory = [
         }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `email=${this._textbox.value}&signup=${this._checkbox.checked}`;
+        stringStream.data = `emailHash=${sha1(this._textbox.value)}&signup=${this._checkbox.checked}`;
 
         let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
           createInstance(Ci.nsIMIMEInputStream);
@@ -482,7 +500,7 @@ let UIFactory = [
         FirefoxMonitor.notifyTelemetryListeners(`variant_5_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `email=${this._textbox.value}`;
+        stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
 
         let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
           createInstance(Ci.nsIMIMEInputStream);
