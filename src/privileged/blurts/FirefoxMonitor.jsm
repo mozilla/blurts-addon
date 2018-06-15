@@ -175,7 +175,7 @@ let UIFactory = [
         accessKey: "f",
         callback: () => {
           FirefoxMonitor.notifyTelemetryListeners(`variant_1_submit`);
-          doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + host, "tab");
+          doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
         },
       },
       secondaryActions: [
@@ -384,7 +384,7 @@ let UIFactory = [
       accessKey: "f",
       callback: function() {
         FirefoxMonitor.notifyTelemetryListeners(`variant_4_submit`);
-        doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + host, "tab");
+        doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
       }.bind(retval),
     };
     retval.secondaryActions = [
