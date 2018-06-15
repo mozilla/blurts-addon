@@ -31,7 +31,7 @@ function sha1(str) {
 this.FirefoxMonitor = {
   init(aExtension, aVariation) {
     gExtension = aExtension;
-    UI_VARIANT = 1; //parseInt(aVariation);
+    UI_VARIANT = parseInt(aVariation);
 
     fetch(gExtension.getURL("breaches.json")).then(function(response) {
       return response.json();
@@ -48,18 +48,18 @@ this.FirefoxMonitor = {
     });
   },
 
-  telemetryListeners: new Set(),
+  eventListeners: new Set(),
 
-  addTelemetryListener(aListener) {
-    this.telemetryListeners.add(aListener);
+  addEventListener(aListener) {
+    this.eventListeners.add(aListener);
   },
 
-  removeTelemetryListener(aListener) {
-    this.telemetryListeners.delete(aListener);
+  removeEventListener(aListener) {
+    this.eventListeners.delete(aListener);
   },
 
-  notifyTelemetryListeners(id) {
-    for (let cb of this.telemetryListeners) {
+  notifyEventListeners(id) {
+    for (let cb of this.eventListeners) {
       cb(id);
     }
   },
@@ -115,7 +115,9 @@ function warnIfNeeded(browser, host) {
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
-  showPanel(browser, ui, "breach-alerts");
+  const notificationId = `breach_alerts_variant_${UI_VARIANT + 1}`;
+  const telemetryId = `variant_${UI_VARIANT + 1}`
+  showPanel(browser, ui, notificationId, telemetryId);
 }
 
 function showSurvey(browser, aWithEmail) {
@@ -123,18 +125,20 @@ function showSurvey(browser, aWithEmail) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = surveyFactory(aWithEmail, doc);
+  const notificationId = `breach_alerts_survey_variant_${UI_VARIANT + 1}`;
+  const telemetryId = `survey_variant_${UI_VARIANT + 1}`;
 
   if (panel.hidden) {
-    showPanel(browser, ui, "breach-alerts-survey");
+    showPanel(browser, ui, notificationId, telemetryId);
     return;
   }
 
   panel.addEventListener("popuphidden", () => {
-    showPanel(browser, ui, "breach-alerts-survey");
+    showPanel(browser, ui, notificationId, telemetryId);
   }, { once: true });
 }
 
-function showPanel(browser, ui, notificationId) {
+function showPanel(browser, ui, notificationId, telemetryId) {
   let doc = browser.ownerDocument;
   let panel = doc.defaultView.PopupNotifications.panel;
 
@@ -160,7 +164,8 @@ function showPanel(browser, ui, notificationId) {
 
   doc.defaultView.PopupNotifications.show(
     browser, notificationId, "",
-    null, ui.primaryAction, ui.secondaryActions, {persistent: true, eventCallback: populatePanel});
+    null, ui.primaryAction, ui.secondaryActions, {persistent: true, hideClose: true, eventCallback: populatePanel});
+  FirefoxMonitor.notifyEventListeners(`${telemetryId}_shown`);
 }
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -192,7 +197,7 @@ let UIFactory = [
         label: "Go to Firefox Monitor",
         accessKey: "f",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_1_submit`);
+          FirefoxMonitor.notifyEventListeners(`variant_1_submit`);
           doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
         },
       },
@@ -201,14 +206,14 @@ let UIFactory = [
           label: "Dismiss",
           accessKey: "d",
           callback: () => {
-            FirefoxMonitor.notifyTelemetryListeners(`variant_1_dismiss`);
+            FirefoxMonitor.notifyEventListeners(`variant_1_dismiss`);
             showSurvey(browser, false);
           },
         }, {
           label: "Never show breach alerts",
           accessKey: "n",
           callback: () => {
-            FirefoxMonitor.notifyTelemetryListeners(`variant_1_dismiss_permanent`);
+            FirefoxMonitor.notifyEventListeners(`variant_1_dismiss_permanent`);
             showSurvey(browser, false);
             blurtsDisabled = true;
           },
@@ -257,7 +262,7 @@ let UIFactory = [
       label: "Search Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyTelemetryListeners(`variant_2_submit`);
+        FirefoxMonitor.notifyEventListeners(`variant_2_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
         stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
@@ -274,14 +279,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_2_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`variant_2_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_2_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`variant_2_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -337,9 +342,9 @@ let UIFactory = [
       accessKey: "f",
       callback: function() {
         if (this._checkbox.checked) {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit_checked`);
+          FirefoxMonitor.notifyEventListeners(`variant_3_submit_checked`);
         } else {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_3_submit`);
+          FirefoxMonitor.notifyEventListeners(`variant_3_submit`);
         }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
@@ -357,14 +362,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_3_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`variant_3_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_3_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`variant_3_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -401,7 +406,7 @@ let UIFactory = [
       label: "Go to Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyTelemetryListeners(`variant_4_submit`);
+        FirefoxMonitor.notifyEventListeners(`variant_4_submit`);
         doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
       }.bind(retval),
     };
@@ -410,14 +415,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_4_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`variant_4_dismiss`);
           showSurvey(browser, false);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_4_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`variant_4_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, false);
         },
@@ -497,7 +502,7 @@ let UIFactory = [
       label: "Search Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyTelemetryListeners(`variant_5_submit`);
+        FirefoxMonitor.notifyEventListeners(`variant_5_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
         stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
@@ -514,14 +519,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_5_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`variant_5_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyTelemetryListeners(`variant_5_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`variant_5_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -594,7 +599,7 @@ function surveyFactory(aWithEmail, doc) {
       let i = 0;
       for (let checkbox of retval._checkboxes) {
         if (checkbox.checked) {
-          FirefoxMonitor.notifyTelemetryListeners(`survey_checkbox_${checkbox.getAttribute("telemetryid")}`);
+          FirefoxMonitor.notifyEventListeners(`survey_checkbox_${checkbox.getAttribute("telemetryid")}`);
         }
         i++;
       }
@@ -604,7 +609,7 @@ function surveyFactory(aWithEmail, doc) {
     label: "Cancel",
     accessKey: "c",
     callback: () => {
-      FirefoxMonitor.notifyTelemetryListeners(`survey_dismissed`);
+      FirefoxMonitor.notifyEventListeners(`survey_dismissed`);
     },
   }];
   return retval;
