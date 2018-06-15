@@ -124,9 +124,27 @@ function showSurvey(browser, aWithEmail) {
   let doc = browser.ownerDocument;
 
   let panel = doc.defaultView.PopupNotifications.panel;
-  const ui = surveyFactory(aWithEmail, doc);
+  const ui = surveyFactory(aWithEmail, doc, browser);
   const notificationId = `breach_alerts_survey_variant_${UI_VARIANT + 1}`;
   const telemetryId = `survey_variant_${UI_VARIANT + 1}`;
+
+  if (panel.hidden) {
+    showPanel(browser, ui, notificationId, telemetryId);
+    return;
+  }
+
+  panel.addEventListener("popuphidden", () => {
+    showPanel(browser, ui, notificationId, telemetryId);
+  }, { once: true });
+}
+
+function showThankYou(browser) {
+  let doc = browser.ownerDocument;
+
+  let panel = doc.defaultView.PopupNotifications.panel;
+  const ui = surveyGratitudeFactory(doc);
+  const notificationId = `breach_alerts_survey_gratitude`;
+  const telemetryId = `survey_gratitude_variant_${UI_VARIANT + 1}`;
 
   if (panel.hidden) {
     showPanel(browser, ui, notificationId, telemetryId);
@@ -536,7 +554,7 @@ let UIFactory = [
   },
 ];
 
-function surveyFactory(aWithEmail, doc) {
+function surveyFactory(aWithEmail, doc, browser) {
   let retval = {
     _checkboxes: [],
     get box() {
@@ -603,6 +621,7 @@ function surveyFactory(aWithEmail, doc) {
         }
         i++;
       }
+      showThankYou(browser);
     },
   };
   retval.secondaryActions = [{
@@ -612,6 +631,28 @@ function surveyFactory(aWithEmail, doc) {
       FirefoxMonitor.notifyEventListeners(`survey_dismissed`);
     },
   }];
+  return retval;
+}
+
+function surveyGratitudeFactory(doc) {
+  let retval = {
+    get box() {
+      let box = doc.createElementNS(XUL_NS, "vbox");
+      let elt = doc.createElementNS(XUL_NS, "description");
+      elt.setAttribute("anonid", "maindesc");
+      elt.appendChild(doc.createTextNode("Thank you for your feedback!"));
+      elt.setAttribute("style", "font-size: 150%; white-space: pre-wrap; margin-bottom: 10rem;");
+      box.appendChild(elt);
+      return box;
+    }
+  };
+  retval.primaryAction = {
+    label: "Close",
+    accessKey: "c",
+    callback: () => {
+    },
+  };
+  retval.secondaryActions = [];
   return retval;
 }
 
