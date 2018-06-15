@@ -186,7 +186,27 @@ function showPanel(browser, ui, notificationId, telemetryId) {
   FirefoxMonitor.notifyEventListeners(`${telemetryId}_shown`);
 }
 
+function makeSpanWithLinks(aStrParts, doc) {
+  let spanElt = doc.createElementNS(HTML_NS, "span");
+  for (let str of aStrParts) {
+    if (!str.link) {
+      spanElt.appendChild(doc.createTextNode(str.str));
+      continue;
+    }
+    let anchor = doc.createElementNS(HTML_NS, "a");
+    anchor.setAttribute("style", "color: #0060DF");
+    anchor.setAttribute("href", "javascript:void(0)");
+    anchor.addEventListener("click", (event) => {
+      doc.defaultView.openUILinkIn(str.link, "tab");
+    });
+    anchor.appendChild(doc.createTextNode(str.str));
+    spanElt.appendChild(anchor);
+  }
+  return spanElt;
+}
+
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const HTML_NS = "http://www.w3.org/1999/xhtml";
 let UIFactory = [
   function(browser, doc, host, site) {
     return {
@@ -206,7 +226,12 @@ let UIFactory = [
         elt.setAttribute("style", "font-size: 150%; text-align: center; white-space: pre; margin-bottom: 1rem;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
-        elt.appendChild(doc.createTextNode(site.Title + " was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information.\n\nFind out if your account is at risk and learn how to protect yourself at the Firefox Monitor website."));
+        let strings = [
+          {str: site.Title + " was reported to "},
+          {str: "Firefox Monitor"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nFind out if your account is at risk and learn how to protect yourself at the Firefox Monitor website."},
+        ];
+        elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         return box;
@@ -259,7 +284,14 @@ let UIFactory = [
         elt.setAttribute("style", "font-size: 150%; text-align: center; white-space: pre; margin-bottom: 1rem;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
-        elt.appendChild(doc.createTextNode(site.Title + " was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our Privacy Policy.)"));
+        let strings = [
+          {str: site.Title + " was reported to "},
+          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
+          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
+          {str: ".)"},
+        ];
+        elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "textbox");
@@ -333,7 +365,14 @@ let UIFactory = [
         elt.setAttribute("style", "font-size: 150%; text-align: center; white-space: pre;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
-        elt.appendChild(doc.createTextNode(site.Title + " was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our Privacy Policy.)"));
+        let strings = [
+          {str: site.Title + " was reported to "},
+          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
+          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
+          {str: ".)"},
+        ];
+        elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "textbox");
@@ -459,6 +498,12 @@ let UIFactory = [
         elt.setAttribute("style", "font-size: 150%; white-space: pre; margin-bottom: 1rem;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
+        let strings = [
+          {str: "This website was reported to "},
+          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
+        ];
+        elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
         elt.setAttribute("style", "white-space: pre-wrap; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
         box.appendChild(elt);
@@ -500,7 +545,12 @@ let UIFactory = [
         elt.setAttribute("style", "margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);")
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
-        elt.appendChild(doc.createTextNode("Enter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our Privacy Policy.)"));
+        strings = [
+          {str: "Enter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
+          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
+          {str: ".)"},
+        ];
+        elt.appendChild(makeSpanWithLinks(strings, doc));
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("style", "-moz-appearance: none; height: 2.5rem; padding: 0.5rem; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
