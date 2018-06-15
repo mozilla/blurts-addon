@@ -13,6 +13,8 @@
     }
   },
 
+  "permissions": ["storage"],
+
   "experiment_apis": {
     "study": {
       "schema": "./privileged/study/schema.json",

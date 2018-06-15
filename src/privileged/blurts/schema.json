@@ -17,7 +17,7 @@
     ],
     "events": [
       {
-        "name": "onTelemetryEvent",
+        "name": "onEvent",
         "type": "function",
         "parameters": [
           {

@@ -16,18 +16,18 @@ this.blurts = class extends ExtensionAPI {
           FirefoxMonitorContainer.FirefoxMonitor.init(context.extension, variation);
         },
 
-        onTelemetryEvent: new ExtensionCommon.EventManager(
+        onEvent: new ExtensionCommon.EventManager(
           context,
-          "blurts.onTelemetryEvent",
+          "blurts.onEvent",
           (fire) => {
             let listener = (id) => {
               fire.async(id);
             };
 
-            FirefoxMonitorContainer.FirefoxMonitor.addTelemetryListener(listener);
+            FirefoxMonitorContainer.FirefoxMonitor.addEventListener(listener);
 
             return () => {
-              FirefoxMonitorContainer.FirefoxMonitor.removeTelemetryListener(listener);
+              FirefoxMonitorContainer.FirefoxMonitor.removeEventListener(listener);
             };
           }).api(),
       }

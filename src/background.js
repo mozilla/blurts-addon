@@ -1,15 +1,24 @@
-let gTelemetryListener = async function(event) {
-  console.log(event);
+let gEventListener = async function(event) {
+  if (event.endsWith("dismiss_permanent")) {
+    browser.storage.local.set({
+      disabled: true,
+    });
+  }
   browser.study.sendTelemetry({event});
 }
 
 async function init() {
+  const result = await browser.storage.local.get("disabled");
+  if (result.disabled) {
+    return;
+  }
+
   browser.study.onEndStudy.addListener((ending) => {
 
   });
   browser.study.onReady.addListener((studyInfo) => {
     browser.blurts.start(studyInfo.variation.name);
-    browser.blurts.onTelemetryEvent.addListener(gTelemetryListener);
+    browser.blurts.onEvent.addListener(gEventListener);
   });
   await browser.study.setup({
     allowEnroll: true,
