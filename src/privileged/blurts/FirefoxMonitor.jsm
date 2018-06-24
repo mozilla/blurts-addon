@@ -345,9 +345,7 @@ let UIFactory = [
         let strings = [
           {str: site.Title + " was reported to "},
           {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
-          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
-          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
-          {str: ".)"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. \n(Note: Your email will not be stored.)"},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
@@ -431,9 +429,7 @@ let UIFactory = [
         let strings = [
           {str: site.Title + " was reported to "},
           {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
-          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
-          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
-          {str: ".)"},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach."},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
@@ -618,9 +614,8 @@ let UIFactory = [
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
         strings = [
-          {str: "Enter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
-          {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
-          {str: ".)"},
+          {str: "Enter your email to find out if your account was included in a data breach."},
+          {str: "\n(Note: Your email will not be stored.)"},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
         box.appendChild(elt);
