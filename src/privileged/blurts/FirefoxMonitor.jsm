@@ -197,7 +197,7 @@ function makeSpanWithLinks(aStrParts, doc) {
     anchor.setAttribute("style", "color: #0060DF");
     anchor.setAttribute("href", "javascript:void(0)");
     anchor.addEventListener("click", (event) => {
-      doc.defaultView.openUILinkIn(str.link, "tab");
+      doc.defaultView.openUILinkIn(str.link, "tab", {});
     });
     anchor.appendChild(doc.createTextNode(str.str));
     spanElt.appendChild(anchor);
@@ -208,6 +208,8 @@ function makeSpanWithLinks(aStrParts, doc) {
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 let UIFactory = [
+
+  //variant #1
   function(browser, doc, host, site) {
     return {
       get box() {
@@ -241,7 +243,7 @@ let UIFactory = [
         accessKey: "f",
         callback: () => {
           FirefoxMonitor.notifyEventListeners(`variant_1_submit`);
-          doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
+          doc.defaultView.openUILinkIn(`https://monitor.firefox.com/?breach=${host}`, "tab", {});
         },
       },
       secondaryActions: [
@@ -264,6 +266,8 @@ let UIFactory = [
       ],
     };
   },
+
+  //variant #2
   function(browser, doc, host, site) {
     let retval = {
       _textbox: null,
@@ -286,7 +290,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: site.Title + " was reported to "},
-          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
           {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
           {str: ".)"},
@@ -321,7 +325,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab", { postData });
+        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -344,6 +348,8 @@ let UIFactory = [
     ];
     return retval;
   },
+
+  //variant #3
   function(browser, doc, host, site) {
     let retval = {
       _textbox: null,
@@ -367,7 +373,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: site.Title + " was reported to "},
-          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. (Note: Your email will not be stored. Find out more in our "},
           {str: "Privacy Policy", link: "https://www.mozilla.org/privacy/firefox/"},
           {str: ".)"},
@@ -411,7 +417,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab", { postData });
+        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -464,7 +470,7 @@ let UIFactory = [
       accessKey: "f",
       callback: function() {
         FirefoxMonitor.notifyEventListeners(`variant_4_submit`);
-        doc.defaultView.openUILinkIn("http://fx-breach-alerts.herokuapp.com/?breach=" + site.Title, "tab");
+        doc.defaultView.openUILinkIn(`https://monitor.firefox.com/`, "tab", {});
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -487,6 +493,8 @@ let UIFactory = [
     ];
     return retval;
   },
+
+  //variant #5
   function(browser, doc, host, site) {
     let retval = {
       _textbox: null,
@@ -500,7 +508,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: "This website was reported to "},
-          {str: "Firefox Monitor", link: "https://fx-breach-alerts.herokuapp.com/"},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
@@ -579,7 +587,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://fx-breach-alerts.herokuapp.com/scan", "tab", { postData });
+        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
