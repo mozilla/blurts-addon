@@ -76,7 +76,7 @@ const handleInputs = function(event, variantNumber, inputElement, doc) {
     createInstance(Ci.nsIMIMEInputStream);
   postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
   postData.setData(stringStream);
-  doc.defaultView.openUILinkIn("http://localhost:6060/scan", "tab", { postData });
+  doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
   FirefoxMonitor.notifyEventListeners(`variant_${variantNumber}_submit`);
   }
 }
