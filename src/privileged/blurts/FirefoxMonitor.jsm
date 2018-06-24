@@ -11,22 +11,76 @@ const imageDataURIs = {
 let gExtension;
 
 function sha1(str) {
+  console.log(`string at start : ${str}`);
   let converter =
     Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
       createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
   converter.charset = "UTF-8";
   let result = {};
   let data = converter.convertToByteArray(str, result);
+  console.log(`data result = ${str}`);
   let ch = Components.classes["@mozilla.org/security/hash;1"]
                      .createInstance(Components.interfaces.nsICryptoHash);
   ch.init(ch.SHA1);
   ch.update(data, data.length);
+  console.log(`ch = ${ch}`);
   let hash = ch.finish(false);
+  console.log(`hash = ${hash}`);
   function toHexString(charCode) {
     return ("0" + charCode.toString(16)).slice(-2);
   }
+  console.log(`returned value = ${Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("")}`)
   return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
 }
+
+function isEmailValid(val) {
+  // https://stackoverflow.com/a/46181
+  const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(val).toLowerCase());
+};
+
+function showInvalidMessage(textbx) {
+  textbx.style.borderStyle = "solid";
+  textbx.style.borderColor = "#d70022cc";
+  textbx.style.borderWidth = "1px";
+  textbx.value = "";
+  textbx.placeholder = "Please enter a valid email.";
+  textbx.boxShadow = "1px 0px 4px #d700224d";
+  textbx.style.transition = "all 0.2s ease";
+}
+
+function clearInvalidMessage(textbx) {
+  textbx.style.borderStyle = "solid";
+  textbx.style.borderColor = "rgba(12, 12, 13, 0.30)";
+  textbx.style.borderWidth = "1px";
+  textbx.placeholder = "Please enter a valid email.";
+  textbx.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.09)";
+  textbx.transition = "all 0.2s ease";
+}
+
+
+const handleInputs = function(event, variantNumber, inputElement, doc) {
+  const emailString = inputElement.value;
+  clearInvalidMessage(inputElement);
+  if(event.keyCode !==13){
+    return;
+  }
+  if(inputElement.value = "" || !isEmailValid(inputElement.value)) {
+    showInvalidMessage(inputElement);
+  } else {
+  let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
+    createInstance(Ci.nsIStringInputStream);
+    let hashedEmail = sha1(emailString);
+    stringStream.data = `emailHash=${hashedEmail}`;
+  let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
+    createInstance(Ci.nsIMIMEInputStream);
+  postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  postData.setData(stringStream);
+  doc.defaultView.openUILinkIn("http://localhost:6060/scan", "tab", { postData });
+  FirefoxMonitor.notifyEventListeners(`variant_${variantNumber}_submit`);
+  }
+}
+
 
 this.FirefoxMonitor = {
   init(aExtension, aVariation) {
@@ -303,10 +357,12 @@ let UIFactory = [
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("keydown", function listener(event) {
-          if (event.key !== "Enter") return;
-          elt.removeEventListener("keydown", listener);
-          let popupNotification = doc.getElementById("breach-alerts-notification");
-          doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
+
+          handleInputs(event, "2", elt, doc);
+
+          // elt.removeEventListener("keydown", listener);
+          // let popupNotification = doc.getElementById("breach-alerts-notification");
+          // doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
         });
         this._textbox = elt;
         box.appendChild(elt);
@@ -382,18 +438,22 @@ let UIFactory = [
         elt.appendChild(makeSpanWithLinks(strings, doc));
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
-        elt = doc.createElementNS(XUL_NS, "textbox");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
-        elt.setAttribute("placeholder", "Enter Email");
-        elt.setAttribute("id", "emailToHash");
-        elt.addEventListener("keydown", function listener(event) {
-          if (event.key !== "Enter") return;
-          elt.removeEventListener("keydown", listener);
-          let popupNotification = doc.getElementById("breach-alerts-notification");
-          doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
+        let emailInput = doc.createElementNS(XUL_NS, "textbox");
+        emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        emailInput.setAttribute("placeholder", "Enter Email");
+        emailInput.setAttribute("id", "emailToHash");
+        emailInput.allowEvents = true;
+        emailInput.addEventListener("keydown", function listener(event) {
+
+          handleInputs(event, "3", emailInput, doc);
+
+          // if (event.key !== "Enter") return;
+          // elt.removeEventListener("keydown", listener);
+          // let popupNotification = doc.getElementById("breach-alerts-notification");
+          // doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
         });
-        this._textbox = elt;
-        box.appendChild(elt);
+        this._textbox = emailInput;
+        box.appendChild(emailInput);
         elt = doc.createElementNS(XUL_NS, "checkbox");
         elt.setAttribute("label", "Sign up for Firefox Monitor alerts");
         elt.setAttribute("checked", "false");
@@ -569,10 +629,10 @@ let UIFactory = [
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("keydown", function listener(event) {
-          if (event.key !== "Enter") return;
-          elt.removeEventListener("keydown", listener);
-          let popupNotification = doc.getElementById("breach-alerts-notification");
-          doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
+          handleInputs(event, "5", elt, doc);
+          // elt.removeEventListener("keydown", listener);
+          // let popupNotification = doc.getElementById("breach-alerts-notification");
+          // doc.getAnonymousElementByAttribute(popupNotification, "anonid", "button").click();
         });
         this._textbox = elt;
         box.appendChild(elt);
