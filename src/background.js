@@ -1,6 +1,6 @@
 
 /*
-   Originally from Schalk Neethling at https://github.com/schalkneethling/dnt-helper
+   Excerpt from Schalk Neethling at https://github.com/schalkneethling/dnt-helper
  * Respects user choice & honor DoNotTrack
  * Returns true or false based on whether doNotTack is enabled.
  * @returns {boolean} true if enabled else false
@@ -12,19 +12,9 @@
 function _dntEnabled(dnt, userAgent) {
   'use strict';
   let dntStatus = dnt || navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
-  const ua = userAgent || navigator.userAgent;
-  const fxMatch = ua.match(/Firefox\/(\d+)/);
-  var platform = ua.match(/Windows.+?(?=;)/g);
-  if (fxMatch && parseInt(fxMatch[1], 10) < 32) {
-      dntStatus = 'Unspecified';
-  }  else {
-      dntStatus = { '0': 'Disabled', '1': 'Enabled' }[dntStatus] || 'Unspecified';
-  }
+  dntStatus = { '0': 'Disabled', '1': 'Enabled' }[dntStatus] || 'Unspecified';
   return dntStatus === 'Enabled' ? true : false;
 }
-
-
-
 
 let gEventListener = async function(event) {
   if (event.endsWith("dismiss_permanent")) {
@@ -40,7 +30,6 @@ async function init() {
   if (_dntEnabled() || result.disabled) {
     return;
   }
-
   browser.study.onEndStudy.addListener((ending) => {
 
   });

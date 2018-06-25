@@ -34,36 +34,36 @@ function isEmailValid(val) {
   return re.test(String(val).toLowerCase());
 };
 
-function showInvalidMessage(textbx) {
-  textbx.style.borderStyle = "solid";
-  textbx.style.borderColor = "#d70022cc";
-  textbx.style.borderWidth = "1px";
-  textbx.value = "";
-  textbx.placeholder = "Please enter a valid email.";
-  textbx.style.boxShadow = "1px 0px 4px #d7002233";
-  textbx.style.transition = "all 0.2s ease";
+function showInvalidMessage(textbox) {
+  textbox.style.borderStyle = "solid";
+  textbox.style.borderColor = "#d70022cc";
+  textbox.style.borderWidth = "1px";
+  textbox.value = "";
+  textbox.placeholder = "Please enter a valid email.";
+  textbox.style.boxShadow = "1px 0px 4px #d7002233";
+  textbox.style.transition = "all 0.2s ease";
 }
 
-function clearInvalidMessage(textbx) {
-  textbx.style.borderStyle = "solid";
-  textbx.style.borderColor = "rgba(12, 12, 13, 0.30)";
-  textbx.style.borderWidth = "1px";
-  textbx.placeholder = "Please enter a valid email.";
-  textbx.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
-  textbx.style.transition = "all 0.2s ease";
+function clearInvalidMessage(textbox) {
+  textbox.style.borderStyle = "solid";
+  textbox.style.borderColor = "rgba(12, 12, 13, 0.30)";
+  textbox.style.borderWidth = "1px";
+  textbox.placeholder = "Please enter a valid email.";
+  textbox.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
+  textbox.style.transition = "all 0.2s ease";
 }
 
 
 const handleInputs = function(event, variantNumber, inputElement, doc) {
   const emailString = inputElement.value;
   clearInvalidMessage(inputElement);
-  if(event.keyCode !==13){
+  if (event.code !== "Enter") {
     return;
   }
-  if(inputElement.value === "" || !isEmailValid(inputElement.value)) {
+  if (inputElement.value === "" || !isEmailValid(inputElement.value)) {
     showInvalidMessage(inputElement);
   } else {
-  let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
+    let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
     createInstance(Ci.nsIStringInputStream);
     let hashedEmail = sha1(emailString);
     stringStream.data = `emailHash=${hashedEmail}`;
