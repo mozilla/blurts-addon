@@ -11,25 +11,20 @@ const imageDataURIs = {
 let gExtension;
 
 function sha1(str) {
-  console.log(`string at start : ${str}`);
   let converter =
     Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
       createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
   converter.charset = "UTF-8";
   let result = {};
   let data = converter.convertToByteArray(str, result);
-  console.log(`data result = ${str}`);
   let ch = Components.classes["@mozilla.org/security/hash;1"]
                      .createInstance(Components.interfaces.nsICryptoHash);
   ch.init(ch.SHA1);
   ch.update(data, data.length);
-  console.log(`ch = ${ch}`);
   let hash = ch.finish(false);
-  console.log(`hash = ${hash}`);
   function toHexString(charCode) {
     return ("0" + charCode.toString(16)).slice(-2);
   }
-  console.log(`returned value = ${Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("")}`)
   return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
 }
 
@@ -45,7 +40,7 @@ function showInvalidMessage(textbx) {
   textbx.style.borderWidth = "1px";
   textbx.value = "";
   textbx.placeholder = "Please enter a valid email.";
-  textbx.boxShadow = "1px 0px 4px #d700224d";
+  textbx.style.boxShadow = "1px 0px 4px #d7002233";
   textbx.style.transition = "all 0.2s ease";
 }
 
@@ -54,8 +49,8 @@ function clearInvalidMessage(textbx) {
   textbx.style.borderColor = "rgba(12, 12, 13, 0.30)";
   textbx.style.borderWidth = "1px";
   textbx.placeholder = "Please enter a valid email.";
-  textbx.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.09)";
-  textbx.transition = "all 0.2s ease";
+  textbx.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
+  textbx.style.transition = "all 0.2s ease";
 }
 
 
@@ -65,7 +60,7 @@ const handleInputs = function(event, variantNumber, inputElement, doc) {
   if(event.keyCode !==13){
     return;
   }
-  if(inputElement.value = "" || !isEmailValid(inputElement.value)) {
+  if(inputElement.value === "" || !isEmailValid(inputElement.value)) {
     showInvalidMessage(inputElement);
   } else {
   let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
