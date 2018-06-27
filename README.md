@@ -3,21 +3,15 @@ Code for the client-side add-on for Firefox Monitor. Communicates with the
 [blurts-server](https://github.com/mozilla/blurts-server) service.
 
 ## Requirements
-* Firefox 60+
+* Firefox 61 (use an unbranded build for testing - see https://wiki.mozilla.org/Add-ons/Extension_Signing#Unbranded_Builds)
 
-## Install
-1. Go to `about:debugging`
-2. Click "Load Temporary Add-on"
-3. Navigate to and select `manifest.json` or `blurts.xpi` if built
+## Setup
+1. Clone the repo
+2. $npm install
 
 ## Running
-Once you've installed the add-on, visit a site that is in [the list of breached
-sites on HIBP](https://haveibeenpwned.com/PwnedWebsites).
+$export FIREFOX_BINARY=/path/to/unbranded/firefox/binary
+$npm start
 
 ## Building
-Use
-[`web-ext`](https://developer.mozilla.org/Add-ons/WebExtensions/Getting_started_with_web-ext)
-to build the add-on:
-```
-web-ext build
-```
+$npm run build
