@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Firefox Monitor",
-  "version": "0.01",
+  "version": "1.0",
   "description": "Add-on to show notifications upon visiting breached sites.",
   "background": {
     "scripts": ["background.js"]
