@@ -14,6 +14,9 @@ module.exports = {
     // list of rules at: https://dxr.mozilla.org/mozilla-central/source/tools/lint/eslint/eslint-plugin-mozilla/lib/configs/recommended.js
     "plugin:mozilla/recommended",
   ],
+  globals: {
+    ExtensionAPI: false,
+  },
   overrides: [
     {
       files: "src/**",
@@ -26,20 +29,18 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 8,
     sourceType: "module",
-    ecmaFeatures: {
-      jsx: false,
-      experimentalObjectRestSpread: true,
-    },
   },
   plugins: ["json", "mozilla"],
   root: true,
   rules: {
     "babel/new-cap": "off",
-    "mozilla/no-aArgs": "warn",
-    "mozilla/balanced-listeners": "off",
+    "mozilla/no-aArgs": "off", // Parameter '...' uses Hungarian Notation, consider using '...' instead
+    "mozilla/balanced-listeners": "warn",
+    "mozilla/no-useless-removeEventListener": "off",
+
     "comma-dangle": ["error", "always-multiline"],
-    eqeqeq: "error",
-    indent: ["warn", 2, { SwitchCase: 1 }],
+    "eqeqeq": "error",
+    "indent": ["warn", 2, { SwitchCase: 1 }],
     "max-len": [
       "warn",
       {
@@ -57,7 +58,7 @@ module.exports = {
     "no-var": "error",
     "prefer-const": "warn",
     "prefer-spread": "error",
-    semi: ["error", "always"],
+    "semi": ["error", "always"],
     "valid-jsdoc": "warn",
   },
 };
