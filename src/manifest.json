@@ -9,7 +9,7 @@
   "applications": {
     "gecko": {
       "id": "fxmonitor@shield.mozilla.org",
-      "strict_min_version": "60.0"
+      "strict_min_version": "61.0"
     }
   },
 
