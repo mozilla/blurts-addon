@@ -36,7 +36,7 @@ function isEmailValid(val) {
   return re.test(String(val).toLowerCase());
 }
 
-const handleInputs = function(event, textbox, doc, browser) {
+const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
   function showInvalidMessage() {
     textbox.style.borderStyle = "solid";
     textbox.style.borderColor = "#d70022cc";
@@ -61,7 +61,7 @@ const handleInputs = function(event, textbox, doc, browser) {
       let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
       createInstance(Ci.nsIStringInputStream);
       let hashedEmail = sha1(emailString);
-      stringStream.data = `emailHash=${hashedEmail}`;
+      stringStream.data = `emailHash=${hashedEmail}&signup=${checkboxChecked || ""}`;
       let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
         createInstance(Ci.nsIMIMEInputStream);
       postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -491,8 +491,8 @@ let UIFactory = [
         emailInput.addEventListener("input", function listener(event) {
           handleInputs(event, emailInput, doc, browser);
         });
-        emailInput.addEventListener("command", function listener(event) {
-          handleInputs(event, emailInput, doc, browser);
+        emailInput.addEventListener("command", (event) => {
+          handleInputs(event, emailInput, doc, browser, this._checkbox.checked);
         });
         this._textbox = emailInput;
         box.appendChild(emailInput);
@@ -515,7 +515,7 @@ let UIFactory = [
         }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `emailHash=${sha1(this._textbox.value)}&signup=${this._checkbox.checked}`;
+        stringStream.data = `emailHash=${sha1(this._textbox.value)}&signup=${this._checkbox.checked || ""}`;
 
         let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
           createInstance(Ci.nsIMIMEInputStream);
