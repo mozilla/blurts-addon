@@ -14,18 +14,14 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Usual Firefox Telemetry is mostly unaffected
 
 * No change: `main` and other pings are UNAFFECTED by this add-on, except that [shield-studies-addon-utils](https://github.com/mozilla/shield-studies-addon-utils) adds the add-on id as an active experiment in the telemetry environment.
+## Usual Firefox Telemetry is mostly unaffected
 * Respects telemetry preferences. If user has disabled telemetry, no telemetry will be sent.
 
 ## Study-specific endings
 
-The STUDY SPECIFIC ENDINGS this study supports are:
-
-* "voted",
-* "notification-x"
-* "window-or-fx-closed"
+(TODO)
 
 ## `shield-study` pings (common to all shield-studies)
 
@@ -37,18 +33,22 @@ Events instrumented in this study:
 
 * UI
 
-  * prompted (notification bar is shown)
+  * When popups are shown (where x is the variant ranging from 1 to 5):
+    * variant_x_shown
+    * survey_variant_x_shown
 
 * Interactions
-  * voted
+  * When popup notification primary action is triggered: variant_x_submit
+  * When the "Dismiss" secondary action is triggered: variant_x_dismiss
+  * when the "Never show breach alerts" secondary action is triggered: variant_x_dismiss_permanent
+  * When the survey popup is submitted, there's one sent for every selected checkbox: survey_checkbox_<checkboxid>
+  * When the survey popup is dismissed: survey_dismissed
 
 All interactions with the UI create sequences of Telemetry Pings.
 
-All UI `shield-study` `study_state` sequences look like this:
-
-* `enter => install => (one of: "voted" | "notification-x" | "window-or-fx-closed") => exit`.
-
 ## Example sequence for a 'voted => not sure' interaction
+
+(TODO: Update the template below)
 
 These are the `payload` fields from all pings in the `shield-study` and `shield-study-addon` buckets.
 
