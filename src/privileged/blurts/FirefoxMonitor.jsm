@@ -146,9 +146,26 @@ let observerAdded = false;
 
 function startObserving() {
   let tpl = {
+    onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+      let location = aRequest.URI;
+      if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
+          !Components.isSuccessCode(aStatus)) {
+        return;
+      }
+      let host;
+      try {
+        host = Services.eTLD.getBaseDomain(location);
+      } catch (e) {
+      }
+      if (!host) return;
+      warnIfNeeded(aBrowser, host);
+    },
     onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-      if (!aLocation.host) return;
-      warnIfNeeded(aBrowser, Services.eTLD.getBaseDomain(aLocation));
+      const newtabURL = "about:newtab";
+      if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
+        return;
+      }
+      warnIfNeeded(aBrowser, newtabURL);
     },
   };
 
@@ -184,7 +201,15 @@ function getTelemetryId() {
 }
 
 function warnIfNeeded(browser, host) {
-  if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
+  if (blurtsDisabled || warnedHostSet.has(host)) {
+    return;
+  }
+
+  if (UI_VARIANT === 3 && host !== "about:newtab") {
+    return;
+  }
+
+  if (UI_VARIANT !== 3 && !domainMap.has(host)) {
     return;
   }
 
@@ -195,6 +220,7 @@ function warnIfNeeded(browser, host) {
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
   showPanel(browser, ui, getNotificationId(), getTelemetryId());
+  doc.getElementById("urlbar").blur();
 }
 
 function showSurvey(browser, aWithEmail) {
