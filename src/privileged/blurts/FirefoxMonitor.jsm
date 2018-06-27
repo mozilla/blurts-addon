@@ -319,7 +319,7 @@ let UIFactory = [
         accessKey: "f",
         callback: () => {
           FirefoxMonitor.notifyEventListeners(`variant_1_submit`);
-          doc.defaultView.openUILinkIn(`https://monitor.firefox.com/?breach=${host}`, "tab", {});
+          doc.defaultView.openUILinkIn(`https://monitor.firefox.com/?breach=${site.Name}`, "tab", {});
         },
       },
       secondaryActions: [
@@ -366,7 +366,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: site.Title + " was reported to "},
-          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${site.Name}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach. \n(Note: Your email will not be stored.)"},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
@@ -450,7 +450,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: site.Title + " was reported to "},
-          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${site.Name}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information.\n\nEnter your email to find out if your account was included in a data breach."},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
@@ -589,7 +589,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "description");
         let strings = [
           {str: "This website was reported to "},
-          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${host}`},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${site.Name}`},
           {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
