@@ -4,3 +4,5 @@ node_modules/
 test/coverage
 /firefox-*
 src/privileged/study
+src/PwnedLogos/*
+src/breaches.json
