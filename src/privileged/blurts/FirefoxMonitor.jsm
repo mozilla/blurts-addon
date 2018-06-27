@@ -81,15 +81,7 @@ const handleInputs = function(event, textbox, doc, browser) {
     doc.getElementById(`${getNotificationId()}-notification`), "anonid", "button");
   const evtWasCommand = event.type === "command";
   const email = textbox.value;
-  if (!email) {
-    if (evtWasCommand) {
-      submit();
-      return;
-    }
-    button.removeAttribute("disabled");
-    return;
-  }
-  if (isEmailValid(email)) {
+  if (email && isEmailValid(email)) {
     if (evtWasCommand) {
       submit(email);
       return;
@@ -105,15 +97,18 @@ const handleInputs = function(event, textbox, doc, browser) {
 
 
 this.FirefoxMonitor = {
-  init(aExtension, aVariation) {
+  init(aExtension, aVariation, warnedSites) {
     gExtension = aExtension;
     UI_VARIANT = parseInt(aVariation);
+    if (warnedSites) {
+      warnedHostSet = new Set(warnedSites);
+    }
 
     fetch(gExtension.getURL("breaches.json")).then(function(response) {
       return response.json();
     }).then(function(sites) {
       for (let site of sites) {
-        domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
+        domainMap.set(site.Domain, { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
       }
       startObserving();
       aExtension.callOnClose({
@@ -146,9 +141,26 @@ let observerAdded = false;
 
 function startObserving() {
   let tpl = {
+    onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+      let location = aRequest.URI;
+      if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
+          !Components.isSuccessCode(aStatus)) {
+        return;
+      }
+      let host;
+      try {
+        host = Services.eTLD.getBaseDomain(location);
+      } catch (e) {
+      }
+      if (!host) return;
+      warnIfNeeded(aBrowser, host);
+    },
     onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-      if (!aLocation.host) return;
-      warnIfNeeded(aBrowser, Services.eTLD.getBaseDomain(aLocation));
+      const newtabURL = "about:newtab";
+      if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
+        return;
+      }
+      warnIfNeeded(aBrowser, newtabURL);
     },
   };
 
@@ -184,17 +196,27 @@ function getTelemetryId() {
 }
 
 function warnIfNeeded(browser, host) {
-  if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
+  if (blurtsDisabled || warnedHostSet.has(host)) {
+    return;
+  }
+
+  if (UI_VARIANT === 3 && host !== "about:newtab") {
+    return;
+  }
+
+  if (UI_VARIANT !== 3 && !domainMap.has(host)) {
     return;
   }
 
   let doc = browser.ownerDocument;
 
   warnedHostSet.add(host);
+  FirefoxMonitor.notifyEventListeners("warned_site_" + host);
 
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
   showPanel(browser, ui, getNotificationId(), getTelemetryId());
+  doc.getElementById("urlbar").blur();
 }
 
 function showSurvey(browser, aWithEmail) {
@@ -253,6 +275,9 @@ function showPanel(browser, ui, notificationId, telemetryId) {
     let icon = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-icon");
     if (icon) {
       icon.remove();
+    }
+    if (ui._textbox) {
+      doc.getAnonymousElementByAttribute(n, "anonid", "button").setAttribute("disabled", "true");
     }
   };
 
@@ -375,7 +400,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("type", "search");
         elt.setAttribute("searchbutton", "true");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("input", function listener(event) {
@@ -457,9 +482,9 @@ let UIFactory = [
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         let emailInput = doc.createElementNS(XUL_NS, "textbox");
-        elt.setAttribute("type", "search");
-        elt.setAttribute("searchbutton", "true");
-        emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        emailInput.setAttribute("type", "search");
+        emailInput.setAttribute("searchbutton", "true");
+        emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         emailInput.setAttribute("placeholder", "Enter Email");
         emailInput.setAttribute("id", "emailToHash");
         emailInput.allowEvents = true;
@@ -642,7 +667,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("type", "search");
         elt.setAttribute("searchbutton", "true");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("input", function listener(event) {
