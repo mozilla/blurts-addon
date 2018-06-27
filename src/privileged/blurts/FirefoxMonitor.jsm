@@ -81,15 +81,7 @@ const handleInputs = function(event, textbox, doc, browser) {
     doc.getElementById(`${getNotificationId()}-notification`), "anonid", "button");
   const evtWasCommand = event.type === "command";
   const email = textbox.value;
-  if (!email) {
-    if (evtWasCommand) {
-      submit();
-      return;
-    }
-    button.removeAttribute("disabled");
-    return;
-  }
-  if (isEmailValid(email)) {
+  if (email && isEmailValid(email)) {
     if (evtWasCommand) {
       submit(email);
       return;
@@ -279,6 +271,9 @@ function showPanel(browser, ui, notificationId, telemetryId) {
     let icon = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-icon");
     if (icon) {
       icon.remove();
+    }
+    if (ui._textbox) {
+      doc.getAnonymousElementByAttribute(n, "anonid", "button").setAttribute("disabled", "true");
     }
   };
 
