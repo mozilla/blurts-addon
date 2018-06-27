@@ -5,7 +5,7 @@ let gEventListener = async function(event) {
     });
   }
   browser.study.sendTelemetry({event});
-}
+};
 
 async function init() {
   const result = await browser.storage.local.get("disabled");
