@@ -97,9 +97,12 @@ const handleInputs = function(event, textbox, doc, browser) {
 
 
 this.FirefoxMonitor = {
-  init(aExtension, aVariation) {
+  init(aExtension, aVariation, warnedSites) {
     gExtension = aExtension;
     UI_VARIANT = parseInt(aVariation);
+    if (warnedSites) {
+      warnedHostSet = new Set(warnedSites);
+    }
 
     fetch(gExtension.getURL("breaches.json")).then(function(response) {
       return response.json();
@@ -208,6 +211,7 @@ function warnIfNeeded(browser, host) {
   let doc = browser.ownerDocument;
 
   warnedHostSet.add(host);
+  FirefoxMonitor.notifyEventListeners("warned_site_" + host);
 
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 

@@ -1,6 +1,15 @@
 let gEventListener = async function(event) {
+  if (event.startsWith("warned_site_")) {
+    let warnedSites = (await browser.storage.local.get("warnedSites")).warnedSites;
+    if (!warnedSites) warnedSites = [];
+    warnedSites.push(event.substring("warned_site_".length));
+    await browser.storage.local.set({
+      warnedSites,
+    });
+    return;
+  }
   if (event.endsWith("dismiss_permanent")) {
-    browser.storage.local.set({
+    await browser.storage.local.set({
       disabled: true,
     });
   }
@@ -15,8 +24,10 @@ async function init() {
   browser.study.onEndStudy.addListener((ending) => {
 
   });
-  browser.study.onReady.addListener((studyInfo) => {
-    browser.blurts.start(studyInfo.variation.name);
+  browser.study.onReady.addListener(async (studyInfo) => {
+    let warnedSites = (await browser.storage.local.get("warnedSites")).warnedSites;
+    warnedSites = warnedSites ? warnedSites.join() : "";
+    browser.blurts.start(studyInfo.variation.name, warnedSites);
     browser.blurts.onEvent.addListener(gEventListener);
   });
   await browser.study.setup({

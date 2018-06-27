@@ -11,6 +11,10 @@
           {
             "name": "variation",
             "type": "string"
+          },
+          {
+            "name": "warnedSites",
+            "type": "string"
           }
         ]
       }
