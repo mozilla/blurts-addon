@@ -88,7 +88,7 @@ this.FirefoxMonitor = {
       return response.json();
     }).then(function(sites) {
       for (let site of sites) {
-        domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: site.LogoFilename });
+        domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
       }
       startObserving();
       aExtension.callOnClose({
@@ -576,8 +576,7 @@ let UIFactory = [
         elt.setAttribute("style", "margin-bottom: 1rem;")
         let elt2 = doc.createElementNS(XUL_NS, "image");
         elt2.setAttribute("flex", "0");
-        elt2.setAttribute("src", gExtension.getURL("PwnedLogos/" + domainMap.get(host).logoSrc));
-        elt2.setAttribute("style", "width: 64px; margin-inline-start: 6px; margin-inline-end: 5px;");
+        elt2.setAttribute("style", `width: 64px; margin-inline-start: 6px; margin-inline-end: 5px; background: url(${gExtension.getURL("PwnedLogos/" + domainMap.get(host).logoSrc)}) no-repeat; background-size: contain; background-position: center;`);
         elt.appendChild(elt2);
         elt2 = doc.createElementNS(XUL_NS, "vbox");
         elt2.setAttribute("align", "start");

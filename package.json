@@ -7,6 +7,7 @@
     "url": "https://github.com/mozilla/shield-studies-addon-template/issues"
   },
   "dependencies": {
+    "node-fetch": "^2.1.2",
     "shield-studies-addon-utils": "github:mozilla/shield-studies-addon-utils#release/5.0.3"
   },
   "devDependencies": {
@@ -65,7 +66,7 @@
   },
   "scripts": {
     "build": "web-ext build",
-    "bundle-utils": "copyStudyUtils src/privileged",
+    "bundle-utils": "copyStudyUtils src/privileged && node scripts/setup-breaches.js",
     "docformat": "doctoc --title '**Contents**' docs/*.md && prettier '**/*.md' --write",
     "eslint": "eslint . --ext jsm,js,json",
     "eslint-fix": "npm run eslint -- --fix",
