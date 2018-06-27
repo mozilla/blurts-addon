@@ -1,2 +1,5 @@
-*.xpi
-web-ext-artifacts
+dist/*
+node_modules/
+.env
+test/coverage
+/firefox-*
