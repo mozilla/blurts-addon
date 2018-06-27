@@ -121,11 +121,11 @@ let observerAdded = false;
 
 function startObserving() {
   let tpl = {
-    onLocationChange: function(aBrowser, aWebProgress, aRequest, aLocation) {
+    onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
       if (!aLocation.host) return;
-      warnIfNeeded(aBrowser, aLocation.host);
-    }
-  }
+      warnIfNeeded(aBrowser, Services.eTLD.getBaseDomain(aLocation));
+    },
+  };
 
   EveryWindow.registerCallback(
     "breach-alerts",
@@ -151,10 +151,6 @@ let blurtsDisabled = false;
 let UI_VARIANT;
 
 function warnIfNeeded(browser, host) {
-  if (host.startsWith("www.")) {
-    host = host.substring(4);
-  }
-
   if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
     return;
   }
