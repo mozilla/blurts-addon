@@ -36,26 +36,25 @@ function isEmailValid(val) {
   return re.test(String(val).toLowerCase());
 }
 
-function showInvalidMessage(textbox) {
-  textbox.style.borderStyle = "solid";
-  textbox.style.borderColor = "#d70022cc";
-  textbox.style.borderWidth = "1px";
-  textbox.placeholder = "Please enter a valid email.";
-  textbox.style.boxShadow = "1px 0px 4px #d7002233";
-  textbox.style.transition = "all 0.2s ease";
-}
+const handleInputs = function(event, textbox, doc, browser) {
+  function showInvalidMessage() {
+    textbox.style.borderStyle = "solid";
+    textbox.style.borderColor = "#d70022cc";
+    textbox.style.borderWidth = "1px";
+    textbox.placeholder = "Please enter a valid email.";
+    textbox.style.boxShadow = "1px 0px 4px #d7002233";
+    textbox.style.transition = "all 0.2s ease";
+  }
 
-function clearInvalidMessage(textbox) {
-  textbox.style.borderStyle = "solid";
-  textbox.style.borderColor = "rgba(12, 12, 13, 0.30)";
-  textbox.style.borderWidth = "1px";
-  textbox.placeholder = "Please enter a valid email.";
-  textbox.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
-  textbox.style.transition = "all 0.2s ease";
-}
+  function clearInvalidMessage() {
+    textbox.style.borderStyle = "solid";
+    textbox.style.borderColor = "rgba(12, 12, 13, 0.30)";
+    textbox.style.borderWidth = "1px";
+    textbox.placeholder = "Please enter a valid email.";
+    textbox.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
+    textbox.style.transition = "all 0.2s ease";
+  }
 
-
-const handleInputs = function(event, inputElement, doc, browser) {
   function submit(emailString) {
     doc.defaultView.PopupNotifications.getNotification(getNotificationId(), browser).remove();
     if (emailString) {
@@ -74,14 +73,14 @@ const handleInputs = function(event, inputElement, doc, browser) {
     FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit`);
   }
 
-  clearInvalidMessage(inputElement);
+  clearInvalidMessage(textbox);
   // Make sure we don't show the "x" button, it's problematic because it fires
   // a command event that we can't really distinguish from an "enter" keypress.
-  inputElement._searchIcons.selectedIndex = 0;
+  textbox._searchIcons.selectedIndex = 0;
   const button = doc.getAnonymousElementByAttribute(
     doc.getElementById(`${getNotificationId()}-notification`), "anonid", "button");
   const evtWasCommand = event.type === "command";
-  const email = inputElement.value;
+  const email = textbox.value;
   if (!email) {
     if (evtWasCommand) {
       submit();
@@ -99,7 +98,7 @@ const handleInputs = function(event, inputElement, doc, browser) {
     return;
   }
   if (evtWasCommand) {
-    showInvalidMessage(inputElement);
+    showInvalidMessage(textbox);
   }
   button.setAttribute("disabled", "true");
 };
