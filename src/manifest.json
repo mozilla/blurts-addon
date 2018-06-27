@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Firefox Monitor",
+  "version": "0.01",
+  "description": "Add-on to show notifications upon visiting breached sites.",
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "applications": {
+    "gecko": {
+      "id": "fxmonitor@shield.mozilla.org",
+      "strict_min_version": "61.0"
+    }
+  },
+
+  "permissions": ["storage"],
+
+  "experiment_apis": {
+    "study": {
+      "schema": "./privileged/study/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "./privileged/study/api.js",
+        "paths": [["study"]]
+      }
+    },
+    "blurts": {
+      "schema": "./privileged/blurts/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "./privileged/blurts/api.js",
+        "paths": [["blurts"]]
+      }
+    }
+  }
+}

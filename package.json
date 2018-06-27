@@ -1,0 +1,55 @@
+{
+  "name": "blurts-addon",
+  "description": "Firefox Monitor Shield Study",
+  "version": "1.0.0",
+  "author": "Mozilla",
+  "bugs": {
+    "url": "https://github.com/mozilla/blurts-addon/issues"
+  },
+  "dependencies": {
+    "node-fetch": "^2.1.2",
+    "shield-studies-addon-utils": "github:mozilla/shield-studies-addon-utils#release/5.0.3",
+    "svgo": "^1.0.5"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-import": "^2.5.0",
+    "eslint-plugin-mozilla": "^0.4.4",
+    "eslint-plugin-no-unsanitized": "^2.0.1",
+    "npm-run-all": "^4.1.1",
+    "web-ext": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=8.11.1"
+  },
+  "homepage": "https://github.com/mozilla/blurts-addon",
+  "keywords": [
+    "firefox",
+    "mozilla",
+    "shield-study"
+  ],
+  "license": "MPL-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mozilla/blurts-addon.git"
+  },
+  "scripts": {
+    "build": "web-ext build",
+    "bundle-utils": "copyStudyUtils src/privileged",
+    "eslint": "eslint . --ext jsm,js,json",
+    "lint": "npm-run-all lint:*",
+    "lint:eslint": "npm run eslint",
+    "lint:web-ext-lint": "web-ext lint",
+    "prebuild": "npm run bundle-utils && npm run setup-breaches",
+    "prestart": "npm run bundle-utils",
+    "prewatch": "npm run bundle-utils",
+    "setup-breaches": "node scripts/setup-breaches.js && node_modules/svgo/bin/svgo -q src/PwnedLogos/*.svg",
+    "sign": "echo 'TBD, see: https://bugzilla.mozilla.org/show_bug.cgi?id=1407757'",
+    "start": "web-ext run --no-reload",
+    "test": "npm-run-all -n test:unit test:func",
+    "watch": "web-ext run"
+  }
+}
