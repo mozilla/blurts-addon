@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "node-fetch": "^2.1.2",
-    "shield-studies-addon-utils": "github:mozilla/shield-studies-addon-utils#release/5.0.3"
+    "shield-studies-addon-utils": "github:mozilla/shield-studies-addon-utils#release/5.0.3",
+    "svgo": "^1.0.5"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -86,7 +87,7 @@
     "prestart": "npm run bundle-utils",
     "pretest": "node test/ensure_minimum_node_version.js && npm run build",
     "prewatch": "npm run bundle-utils",
-    "setup-breaches": "node scripts/setup-breaches.js",
+    "setup-breaches": "node scripts/setup-breaches.js && node_modules/svgo/bin/svgo -q src/PwnedLogos/*.svg",
     "sign": "echo 'TBD, see: https://bugzilla.mozilla.org/show_bug.cgi?id=1407757'",
     "start": "web-ext run --no-reload",
     "test": "npm-run-all -n test:unit test:func",
