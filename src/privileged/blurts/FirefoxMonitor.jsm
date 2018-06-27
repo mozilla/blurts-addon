@@ -105,7 +105,7 @@ this.FirefoxMonitor = {
       return response.json();
     }).then(function(sites) {
       for (let site of sites) {
-        domainMap.set(site.Domain, { Domain: site.Domain, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
+        domainMap.set(site.Domain, { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
       }
       startObserving();
       aExtension.callOnClose({
