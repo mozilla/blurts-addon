@@ -12,12 +12,11 @@
     "svgo": "^1.0.5"
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb-base": "^11.2.0",
-    "eslint-plugin-json": "^1.2.0",
+    "eslint": "^5.0.1",
     "eslint-plugin-import": "^2.5.0",
-    "eslint-plugin-mozilla": "^0.4.4",
-    "eslint-plugin-no-unsanitized": "^2.0.1",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mozilla": "^0.14.0",
+    "eslint-plugin-no-unsanitized": "^3.0.2",
     "npm-run-all": "^4.1.1",
     "web-ext": "^2.7.0"
   },
