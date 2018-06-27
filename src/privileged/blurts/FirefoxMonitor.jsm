@@ -375,7 +375,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("type", "search");
         elt.setAttribute("searchbutton", "true");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("input", function listener(event) {
@@ -457,9 +457,9 @@ let UIFactory = [
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         let emailInput = doc.createElementNS(XUL_NS, "textbox");
-        elt.setAttribute("type", "search");
-        elt.setAttribute("searchbutton", "true");
-        emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        emailInput.setAttribute("type", "search");
+        emailInput.setAttribute("searchbutton", "true");
+        emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         emailInput.setAttribute("placeholder", "Enter Email");
         emailInput.setAttribute("id", "emailToHash");
         emailInput.allowEvents = true;
@@ -642,7 +642,7 @@ let UIFactory = [
         elt = doc.createElementNS(XUL_NS, "textbox");
         elt.setAttribute("type", "search");
         elt.setAttribute("searchbutton", "true");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
+        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
         elt.addEventListener("input", function listener(event) {
