@@ -123,7 +123,7 @@ function startObserving() {
   let tpl = {
     onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
       if (!aLocation.host) return;
-      warnIfNeeded(aBrowser, aLocation.host);
+      warnIfNeeded(aBrowser, Services.eTLD.getBaseDomain(aLocation));
     },
   };
 
@@ -151,10 +151,6 @@ let blurtsDisabled = false;
 let UI_VARIANT;
 
 function warnIfNeeded(browser, host) {
-  if (host.startsWith("www.")) {
-    host = host.substring(4);
-  }
-
   if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
     return;
   }
