@@ -1,6 +1,8 @@
 const { utils: Cu } = Components;
 
-Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+                                  "resource://gre/modules/Services.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const imageDataURIs = {
