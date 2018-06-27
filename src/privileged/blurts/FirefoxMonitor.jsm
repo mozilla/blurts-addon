@@ -40,7 +40,6 @@ function showInvalidMessage(textbox) {
   textbox.style.borderStyle = "solid";
   textbox.style.borderColor = "#d70022cc";
   textbox.style.borderWidth = "1px";
-  textbox.value = "";
   textbox.placeholder = "Please enter a valid email.";
   textbox.style.boxShadow = "1px 0px 4px #d7002233";
   textbox.style.transition = "all 0.2s ease";
@@ -56,26 +55,53 @@ function clearInvalidMessage(textbox) {
 }
 
 
-const handleInputs = function(event, variantNumber, inputElement, doc) {
-  const emailString = inputElement.value;
+const handleInputs = function(event, inputElement, doc, browser) {
+  function submit(emailString) {
+    doc.defaultView.PopupNotifications.getNotification(getNotificationId(), browser).remove();
+    if (emailString) {
+      let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
+      createInstance(Ci.nsIStringInputStream);
+      let hashedEmail = sha1(emailString);
+      stringStream.data = `emailHash=${hashedEmail}`;
+      let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
+        createInstance(Ci.nsIMIMEInputStream);
+      postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
+      postData.setData(stringStream);
+      doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
+    } else {
+      doc.defaultView.openUILinkIn("https://monitor.firefox.com/", "tab", {});
+    }
+    FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit`);
+  }
+
   clearInvalidMessage(inputElement);
-  if (event.code !== "Enter") {
+  // Make sure we don't show the "x" button, it's problematic because it fires
+  // a command event that we can't really distinguish from an "enter" keypress.
+  inputElement._searchIcons.selectedIndex = 0;
+  const button = doc.getAnonymousElementByAttribute(
+    doc.getElementById(`${getNotificationId()}-notification`), "anonid", "button");
+  const evtWasCommand = event.type === "command";
+  const email = inputElement.value;
+  if (!email) {
+    if (evtWasCommand) {
+      submit();
+      return;
+    }
+    button.removeAttribute("disabled");
     return;
   }
-  if (inputElement.value === "" || !isEmailValid(inputElement.value)) {
-    showInvalidMessage(inputElement);
-  } else {
-    let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
-    createInstance(Ci.nsIStringInputStream);
-    let hashedEmail = sha1(emailString);
-    stringStream.data = `emailHash=${hashedEmail}`;
-    let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
-      createInstance(Ci.nsIMIMEInputStream);
-    postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
-    postData.setData(stringStream);
-    doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
-    FirefoxMonitor.notifyEventListeners(`variant_${variantNumber}_submit`);
+  if (isEmailValid(email)) {
+    if (evtWasCommand) {
+      submit(email);
+      return;
+    }
+    button.removeAttribute("disabled");
+    return;
   }
+  if (evtWasCommand) {
+    showInvalidMessage(inputElement);
+  }
+  button.setAttribute("disabled", "true");
 };
 
 
@@ -150,6 +176,14 @@ let warnedHostSet = new Set();
 let blurtsDisabled = false;
 let UI_VARIANT;
 
+function getNotificationId() {
+  return `breach_alerts_variant_${UI_VARIANT + 1}`;
+}
+
+function getTelemetryId() {
+  return `variant_${UI_VARIANT + 1}`;
+}
+
 function warnIfNeeded(browser, host) {
   if (blurtsDisabled || !domainMap.has(host) || warnedHostSet.has(host)) {
     return;
@@ -161,9 +195,7 @@ function warnIfNeeded(browser, host) {
 
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
-  const notificationId = `breach_alerts_variant_${UI_VARIANT + 1}`;
-  const telemetryId = `variant_${UI_VARIANT + 1}`;
-  showPanel(browser, ui, notificationId, telemetryId);
+  showPanel(browser, ui, getNotificationId(), getTelemetryId());
 }
 
 function showSurvey(browser, aWithEmail) {
@@ -171,8 +203,8 @@ function showSurvey(browser, aWithEmail) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = surveyFactory(aWithEmail, doc, browser);
-  const notificationId = `breach_alerts_survey_variant_${UI_VARIANT + 1}`;
-  const telemetryId = `survey_variant_${UI_VARIANT + 1}`;
+  const notificationId = `${getNotificationId()}_survey`;
+  const telemetryId = `${getTelemetryId()}_survey`;
 
   if (panel.hidden) {
     showPanel(browser, ui, notificationId, telemetryId);
@@ -189,8 +221,8 @@ function showThankYou(browser) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = surveyGratitudeFactory(doc);
-  const notificationId = `breach_alerts_survey_gratitude`;
-  const telemetryId = `survey_gratitude_variant_${UI_VARIANT + 1}`;
+  const notificationId = `${getNotificationId()}_survey_gratitude`;
+  const telemetryId = `${getTelemetryId()}_survey_gratitude`;
 
   if (panel.hidden) {
     showPanel(browser, ui, notificationId, telemetryId);
@@ -342,11 +374,16 @@ let UIFactory = [
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "textbox");
+        elt.setAttribute("type", "search");
+        elt.setAttribute("searchbutton", "true");
         elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
-        elt.addEventListener("keydown", function listener(event) {
-          handleInputs(event, "2", elt, doc);
+        elt.addEventListener("input", function listener(event) {
+          handleInputs(event, elt, doc, browser);
+        });
+        elt.addEventListener("command", function listener(event) {
+          handleInputs(event, elt, doc, browser);
         });
         this._textbox = elt;
         box.appendChild(elt);
@@ -421,12 +458,17 @@ let UIFactory = [
         elt.setAttribute("style", "text-align: center; white-space: pre-wrap;");
         box.appendChild(elt);
         let emailInput = doc.createElementNS(XUL_NS, "textbox");
+        elt.setAttribute("type", "search");
+        elt.setAttribute("searchbutton", "true");
         emailInput.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
         emailInput.setAttribute("placeholder", "Enter Email");
         emailInput.setAttribute("id", "emailToHash");
         emailInput.allowEvents = true;
-        emailInput.addEventListener("keydown", function listener(event) {
-          handleInputs(event, "3", emailInput, doc);
+        emailInput.addEventListener("input", function listener(event) {
+          handleInputs(event, emailInput, doc, browser);
+        });
+        emailInput.addEventListener("command", function listener(event) {
+          handleInputs(event, emailInput, doc, browser);
         });
         this._textbox = emailInput;
         box.appendChild(emailInput);
@@ -599,11 +641,16 @@ let UIFactory = [
         elt.appendChild(makeSpanWithLinks(strings, doc));
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "textbox");
+        elt.setAttribute("type", "search");
+        elt.setAttribute("searchbutton", "true");
         elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px; -moz-user-focus: normal; -moz-user-select: all !important;");
         elt.setAttribute("placeholder", "Enter Email");
         elt.setAttribute("id", "emailToHash");
-        elt.addEventListener("keydown", function listener(event) {
-          handleInputs(event, "5", elt, doc);
+        elt.addEventListener("input", function listener(event) {
+          handleInputs(event, elt, doc, browser);
+        });
+        elt.addEventListener("command", function listener(event) {
+          handleInputs(event, elt, doc, browser);
         });
         this._textbox = elt;
         box.appendChild(elt);
