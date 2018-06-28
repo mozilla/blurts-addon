@@ -306,8 +306,9 @@ function makeSpanWithLinks(aStrParts, doc) {
     }
     let anchor = doc.createElementNS(HTML_NS, "a");
     anchor.setAttribute("style", "color: #0060DF");
-    anchor.setAttribute("href", "javascript:void(0)");
+    anchor.setAttribute("href", str.link);
     anchor.addEventListener("click", (event) => {
+      event.preventDefault();
       doc.defaultView.openUILinkIn(str.link, "tab", {});
     });
     anchor.appendChild(doc.createTextNode(str.str));
