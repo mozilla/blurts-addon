@@ -1,8 +1,7 @@
-const { utils: Cu, classes: Cc, interfaces: Ci } = Components;
-
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-                                  "resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(this, "Services",
+                               "resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(this, "Preferences",
+                               "resource://gre/modules/Preferences.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const imageDataURIs = {
@@ -14,13 +13,12 @@ let gExtension;
 
 function sha1(str) {
   let converter =
-    Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
-      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+      .createInstance(Ci.nsIScriptableUnicodeConverter);
   converter.charset = "UTF-8";
   let result = {};
   let data = converter.convertToByteArray(str, result);
-  let ch = Components.classes["@mozilla.org/security/hash;1"]
-                     .createInstance(Components.interfaces.nsICryptoHash);
+  let ch = Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
   ch.init(ch.SHA1);
   ch.update(data, data.length);
   let hash = ch.finish(false);
@@ -36,7 +34,7 @@ function isEmailValid(val) {
   return re.test(String(val).toLowerCase());
 }
 
-const handleInputs = function(event, textbox, doc, browser) {
+const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
   function showInvalidMessage() {
     textbox.style.borderStyle = "solid";
     textbox.style.borderColor = "#d70022cc";
@@ -61,7 +59,7 @@ const handleInputs = function(event, textbox, doc, browser) {
       let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
       createInstance(Ci.nsIStringInputStream);
       let hashedEmail = sha1(emailString);
-      stringStream.data = `emailHash=${hashedEmail}`;
+      stringStream.data = `emailHash=${hashedEmail}&signup=${checkboxChecked || ""}`;
       let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
         createInstance(Ci.nsIMIMEInputStream);
       postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -99,7 +97,15 @@ const handleInputs = function(event, textbox, doc, browser) {
 this.FirefoxMonitor = {
   init(aExtension, aVariation, warnedSites) {
     gExtension = aExtension;
-    UI_VARIANT = parseInt(aVariation);
+
+    try {
+      const pref = Preferences.get(`extensions.fxmonitor_shield_mozilla_org.variationName`, null);
+      UI_VARIANT = parseInt(pref !== null ? pref : aVariation);
+    } catch (e) {
+      Cu.reportError("Invalid variation specified, exiting.");
+      return;
+    }
+
     if (warnedSites) {
       warnedHostSet = new Set(warnedSites);
     }
@@ -296,8 +302,9 @@ function makeSpanWithLinks(aStrParts, doc) {
     }
     let anchor = doc.createElementNS(HTML_NS, "a");
     anchor.setAttribute("style", "color: #0060DF");
-    anchor.setAttribute("href", "javascript:void(0)");
+    anchor.setAttribute("href", str.link);
     anchor.addEventListener("click", (event) => {
+      event.preventDefault();
       doc.defaultView.openUILinkIn(str.link, "tab", {});
     });
     anchor.appendChild(doc.createTextNode(str.str));
@@ -491,8 +498,8 @@ let UIFactory = [
         emailInput.addEventListener("input", function listener(event) {
           handleInputs(event, emailInput, doc, browser);
         });
-        emailInput.addEventListener("command", function listener(event) {
-          handleInputs(event, emailInput, doc, browser);
+        emailInput.addEventListener("command", (event) => {
+          handleInputs(event, emailInput, doc, browser, this._checkbox.checked);
         });
         this._textbox = emailInput;
         box.appendChild(emailInput);
@@ -515,7 +522,7 @@ let UIFactory = [
         }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `emailHash=${sha1(this._textbox.value)}&signup=${this._checkbox.checked}`;
+        stringStream.data = `emailHash=${sha1(this._textbox.value)}&signup=${this._checkbox.checked || ""}`;
 
         let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
           createInstance(Ci.nsIMIMEInputStream);
