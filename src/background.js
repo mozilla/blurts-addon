@@ -27,7 +27,7 @@ async function init() {
   browser.study.onReady.addListener(async (studyInfo) => {
     let warnedSites = (await browser.storage.local.get("warnedSites")).warnedSites;
     warnedSites = warnedSites ? warnedSites.join() : "";
-    browser.blurts.start(studyInfo.variation.name, warnedSites);
+    browser.blurts.start(studyInfo.variation.name, warnedSites, studyInfo.firstRunTimestamp);
     browser.blurts.onEvent.addListener(gEventListener);
   });
   await browser.study.setup({

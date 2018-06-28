@@ -10,6 +10,7 @@ const imageDataURIs = {
 };
 
 let gExtension;
+let gFirstRunTimestamp;
 
 function sha1(str) {
   let converter =
@@ -95,8 +96,9 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
 
 
 this.FirefoxMonitor = {
-  init(aExtension, aVariation, warnedSites) {
+  init(aExtension, aVariation, warnedSites, firstRunTimestamp) {
     gExtension = aExtension;
+    gFirstRunTimestamp = firstRunTimestamp;
 
     try {
       const pref = Preferences.get(`extensions.fxmonitor_shield_mozilla_org.variationName`, null);
@@ -146,7 +148,9 @@ this.FirefoxMonitor = {
 let observerAdded = false;
 
 function startObserving() {
-  let tpl = {
+  const newtabURL = "about:newtab";
+
+  const tpl = {
     onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
       let location = aRequest.URI;
       if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
@@ -162,7 +166,6 @@ function startObserving() {
       warnIfNeeded(aBrowser, host);
     },
     onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-      const newtabURL = "about:newtab";
       if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
         return;
       }
@@ -170,14 +173,27 @@ function startObserving() {
     },
   };
 
+  function tol(openEvent) {
+    const browser = openEvent.target.linkedBrowser;
+    if (browser.currentURI.spec !== newtabURL) {
+      return;
+    }
+    warnIfNeeded(browser, newtabURL);
+  }
+
   EveryWindow.registerCallback(
     "breach-alerts",
     (win) => {
       win.gBrowser.addTabsProgressListener(tpl);
+      win.gBrowser.tabContainer.addEventListener("TabOpen", tol);
     },
     (win) => {
+      if (!win.gBrowser) {
+        return;
+      }
       win.gBrowser.removeTabsProgressListener(tpl);
-    }
+      win.gBrowser.tabContainer.removeEventListener("TabOpen", tol);
+    },
   );
   observerAdded = true;
 }
@@ -206,7 +222,9 @@ function warnIfNeeded(browser, host) {
     return;
   }
 
-  if (UI_VARIANT === 3 && host !== "about:newtab") {
+  const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
+  if (UI_VARIANT === 3 &&
+      (host !== "about:newtab" || (Date.now() - gFirstRunTimestamp) < TWO_DAYS)) {
     return;
   }
 
@@ -222,7 +240,21 @@ function warnIfNeeded(browser, host) {
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
   showPanel(browser, ui, getNotificationId(), getTelemetryId());
-  doc.getElementById("urlbar").blur();
+
+  if (UI_VARIANT !== 3) {
+    return;
+  }
+  // When newtabs are opened the URL bar is focused immediately preventing the
+  // panel from showing up until the urlbar is blurred. This could result in the
+  // user never seeing the panel, so we have to do some trickery to unfocus the
+  // urlbar. We call blur() immediately, but also add a single-run focus event
+  // listener that blurs it again, which takes care of the urlbar force-receiving
+  // focus from the browser. Sorry for the hack!
+  const urlbar = doc.getElementById("urlbar");
+  urlbar.blur();
+  urlbar.addEventListener("focus", () => {
+    urlbar.blur();
+  }, { once: true });
 }
 
 function showSurvey(browser, aWithEmail) {
