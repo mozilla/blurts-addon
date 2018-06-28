@@ -8,7 +8,6 @@ Code for the client-side add-on for Firefox Monitor. Communicates with the
 ## Setup
 1. Clone the repo
 2. $npm install
-3. $npm run setup-breaches
 
 ## Running
 $export FIREFOX_BINARY=/path/to/unbranded/firefox/binary

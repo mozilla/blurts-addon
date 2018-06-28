@@ -4,8 +4,3 @@ node_modules/
 test/coverage
 /firefox-*
 src/privileged/study
-src/PwnedLogos/*.png
-src/PwnedLogos/*.svg
-src/PwnedLogos/*.jpg
-src/PwnedLogos/*.gif
-src/breaches.json
