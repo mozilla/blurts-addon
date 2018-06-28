@@ -69,7 +69,7 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
     } else {
       doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/", "tab", {});
     }
-    FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit`);
+    FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit${checkboxChecked ? "_checked" : ""}`);
   }
 
   clearInvalidMessage(textbox);
