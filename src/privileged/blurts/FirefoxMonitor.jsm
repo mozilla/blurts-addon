@@ -1,10 +1,7 @@
-const { utils: Cu, classes: Cc, interfaces: Ci } = Components;
-
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-                                  "resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
-                                  "resource://gre/modules/Preferences.jsm");
+ChromeUtils.defineModuleGetter(this, "Services",
+                               "resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(this, "Preferences",
+                               "resource://gre/modules/Preferences.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const imageDataURIs = {
@@ -16,13 +13,12 @@ let gExtension;
 
 function sha1(str) {
   let converter =
-    Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
-      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+      .createInstance(Ci.nsIScriptableUnicodeConverter);
   converter.charset = "UTF-8";
   let result = {};
   let data = converter.convertToByteArray(str, result);
-  let ch = Components.classes["@mozilla.org/security/hash;1"]
-                     .createInstance(Components.interfaces.nsICryptoHash);
+  let ch = Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
   ch.init(ch.SHA1);
   ch.update(data, data.length);
   let hash = ch.finish(false);
