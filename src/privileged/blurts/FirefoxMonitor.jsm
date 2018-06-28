@@ -3,6 +3,8 @@ const { utils: Cu, classes: Cc, interfaces: Ci } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const imageDataURIs = {
@@ -99,7 +101,15 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
 this.FirefoxMonitor = {
   init(aExtension, aVariation, warnedSites) {
     gExtension = aExtension;
-    UI_VARIANT = parseInt(aVariation);
+
+    try {
+      const pref = Preferences.get(`extensions.fxmonitor_shield_mozilla_org.variationName`, null);
+      UI_VARIANT = parseInt(pref !== null ? pref : aVariation);
+    } catch (e) {
+      Cu.reportError("Invalid variation specified, exiting.");
+      return;
+    }
+
     if (warnedSites) {
       warnedHostSet = new Set(warnedSites);
     }

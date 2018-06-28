@@ -11,9 +11,9 @@ const defaultConfig = {
   },
   run: {
     firefox: process.env.FIREFOX_BINARY || "firefox",
-    browserConsole: true,
+    browserConsole: false,
     startUrl: ["about:debugging"],
-    pref: ["shieldStudy.logLevel=All"],
+    pref: [`extensions.fxmonitor_shield_mozilla_org.variationName=${process.env.VARIATION_NAME}`, "shieldStudy.logLevel=All"],
   },
 };
 
