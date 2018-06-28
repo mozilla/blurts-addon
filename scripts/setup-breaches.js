@@ -5,15 +5,11 @@ const path = require("path");
 const fetch = require("node-fetch");
 
 async function download(url, relativeDestPath) {
-  const contents = await (await fetch(url)).text();
+  const res = await fetch(url);
   return new Promise((resolve, reject) => {
-    fs.writeFile(path.join(path.dirname(__dirname), relativeDestPath), contents, (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(contents);
-    });
+    const dest = fs.createWriteStream(path.join(path.dirname(__dirname), relativeDestPath));
+    res.body.pipe(dest);
+    resolve(res.text());
   });
 }
 
