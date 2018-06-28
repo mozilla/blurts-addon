@@ -15,6 +15,10 @@
           {
             "name": "warnedSites",
             "type": "string"
+          },
+          {
+            "name": "firstRunTimestamp",
+            "type": "number"
           }
         ]
       }
