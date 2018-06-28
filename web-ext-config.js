@@ -13,8 +13,12 @@ const defaultConfig = {
     firefox: process.env.FIREFOX_BINARY || "firefox",
     browserConsole: false,
     startUrl: ["about:debugging"],
-    pref: [`extensions.fxmonitor_shield_mozilla_org.variationName=${process.env.VARIATION_NAME}`, "shieldStudy.logLevel=All"],
+    pref: ["shieldStudy.logLevel=All"],
   },
 };
+
+if (process.env.VARIATION_NAME) {
+  defaultConfig.run.pref.push(`extensions.fxmonitor_shield_mozilla_org.variationName=${process.env.VARIATION_NAME}`);
+}
 
 module.exports = defaultConfig;
