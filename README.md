@@ -10,9 +10,9 @@ Code for the client-side add-on for Firefox Monitor. Communicates with the
 2. $npm install
 
 ## Running
-$export FIREFOX_BINARY=/path/to/unbranded/firefox/binary
-$export VARIATION_NAME=<integer from 0-4>
-$npm start
+1. $export FIREFOX_BINARY=/path/to/unbranded/firefox/binary
+2. $export VARIATION_NAME=<integer from 0-4>
+3. $npm start
 
 If you leave out the VARIATION_NAME environment variable, a random variation will be assigned by shield.
 
