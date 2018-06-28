@@ -64,9 +64,9 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
         createInstance(Ci.nsIMIMEInputStream);
       postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
       postData.setData(stringStream);
-      doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
+      doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
     } else {
-      doc.defaultView.openUILinkIn("https://monitor.firefox.com/", "tab", {});
+      doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/", "tab", {});
     }
     FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit`);
   }
@@ -305,7 +305,7 @@ function makeSpanWithLinks(aStrParts, doc) {
     anchor.setAttribute("href", str.link);
     anchor.addEventListener("click", (event) => {
       event.preventDefault();
-      doc.defaultView.openUILinkIn(str.link, "tab", {});
+      doc.defaultView.openTrustedLinkIn(str.link, "tab", {});
     });
     anchor.appendChild(doc.createTextNode(str.str));
     spanElt.appendChild(anchor);
@@ -351,7 +351,7 @@ let UIFactory = [
         accessKey: "f",
         callback: () => {
           FirefoxMonitor.notifyEventListeners(`variant_1_submit`);
-          doc.defaultView.openUILinkIn(`https://monitor.firefox.com/?breach=${site.Name}`, "tab", {});
+          doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${site.Name}`, "tab", {});
         },
       },
       secondaryActions: [
@@ -434,7 +434,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
+        doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -528,7 +528,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
+        doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
@@ -583,7 +583,7 @@ let UIFactory = [
       accessKey: "f",
       callback() {
         FirefoxMonitor.notifyEventListeners(`variant_4_submit`);
-        doc.defaultView.openUILinkIn(`https://monitor.firefox.com/`, "tab", {});
+        doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/`, "tab", {});
       },
     };
     retval.secondaryActions = [
@@ -701,7 +701,7 @@ let UIFactory = [
           createInstance(Ci.nsIMIMEInputStream);
         postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
         postData.setData(stringStream);
-        doc.defaultView.openUILinkIn("https://monitor.firefox.com/scan", "tab", { postData });
+        doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
       }.bind(retval),
     };
     retval.secondaryActions = [
