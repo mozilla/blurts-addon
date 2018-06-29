@@ -57,7 +57,7 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
   }
 
   function submit(emailString) {
-    doc.defaultView.PopupNotifications.getNotification(getNotificationId(), browser).remove();
+    doc.defaultView.PopupNotifications.getNotification(gNotificationID, browser).remove();
     if (emailString) {
       let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
       createInstance(Ci.nsIStringInputStream);
@@ -71,7 +71,7 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
     } else {
       doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/", "tab", {});
     }
-    FirefoxMonitor.notifyEventListeners(`${getTelemetryId()}_submit${checkboxChecked ? "_checked" : ""}`);
+    FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit${checkboxChecked ? "_checked" : ""}`);
   }
 
   clearInvalidMessage(textbox);
@@ -79,7 +79,7 @@ const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
   // a command event that we can't really distinguish from an "enter" keypress.
   textbox._searchIcons.selectedIndex = 0;
   const button = doc.getAnonymousElementByAttribute(
-    doc.getElementById(`${getNotificationId()}-notification`), "anonid", "button");
+    doc.getElementById(`${gNotificationID}-notification`), "anonid", "button");
   const evtWasCommand = event.type === "command";
   const email = textbox.value;
   if (email && isEmailValid(email)) {
@@ -229,13 +229,7 @@ let warnedHostSet = new Set();
 let blurtsDisabled = false;
 let UI_VARIANT;
 
-function getNotificationId() {
-  return `breach_alerts_variant_${UI_VARIANT + 1}`;
-}
-
-function getTelemetryId() {
-  return `variant_${UI_VARIANT + 1}`;
-}
+const gNotificationID = "fxmonitor_alert";
 
 function warnIfNeeded(browser, host) {
   if (blurtsDisabled || warnedHostSet.has(host)) {
@@ -259,7 +253,7 @@ function warnIfNeeded(browser, host) {
 
   const ui = UIFactory[UI_VARIANT](browser, doc, host, domainMap.get(host)); // get from pref
 
-  showPanel(browser, ui, getNotificationId(), getTelemetryId());
+  showPanel(browser, ui, gNotificationID);
 
   if (UI_VARIANT !== 3) {
     return;
@@ -282,16 +276,15 @@ function showSurvey(browser, aWithEmail) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = surveyFactory(aWithEmail, doc, browser);
-  const notificationId = `${getNotificationId()}_survey`;
-  const telemetryId = `${getTelemetryId()}_survey`;
+  const notificationId = `fxmonitor_survey`;
 
   if (panel.hidden) {
-    showPanel(browser, ui, notificationId, telemetryId);
+    showPanel(browser, ui, notificationId);
     return;
   }
 
   panel.addEventListener("popuphidden", () => {
-    showPanel(browser, ui, notificationId, telemetryId);
+    showPanel(browser, ui, notificationId);
   }, { once: true });
 }
 
@@ -300,27 +293,26 @@ function showThankYou(browser) {
 
   let panel = doc.defaultView.PopupNotifications.panel;
   const ui = surveyGratitudeFactory(doc);
-  const notificationId = `${getNotificationId()}_survey_gratitude`;
-  const telemetryId = `${getTelemetryId()}_survey_gratitude`;
+  const notificationId = `fxmonitor_survey_gratitude`;
 
   if (panel.hidden) {
-    showPanel(browser, ui, notificationId, telemetryId);
+    showPanel(browser, ui, notificationId);
     return;
   }
 
   panel.addEventListener("popuphidden", () => {
-    showPanel(browser, ui, notificationId, telemetryId);
+    showPanel(browser, ui, notificationId);
   }, { once: true });
 }
 
-function showPanel(browser, ui, notificationId, telemetryId) {
+function showPanel(browser, ui, notificationID) {
   let doc = browser.ownerDocument;
 
   let populatePanel = (event) => {
     if (event !== "shown") {
       return;
     }
-    let n = doc.getElementById(notificationId + "-notification");
+    let n = doc.getElementById(notificationID + "-notification");
     let body = doc.getAnonymousElementByAttribute(n, "class", "popup-notification-body");
     let box = body.querySelector(".blurtsbox");
     if (box) {
@@ -340,9 +332,9 @@ function showPanel(browser, ui, notificationId, telemetryId) {
   };
 
   doc.defaultView.PopupNotifications.show(
-    browser, notificationId, "",
+    browser, notificationID, "",
     null, ui.primaryAction, ui.secondaryActions, {persistent: true, hideClose: true, eventCallback: populatePanel});
-  FirefoxMonitor.notifyEventListeners(`${telemetryId}_shown`);
+  FirefoxMonitor.notifyEventListeners(`${notificationID}_shown`);
 }
 
 function makeSpanWithLinks(aStrParts, doc) {
@@ -402,7 +394,7 @@ let UIFactory = [
         label: "Go to Firefox Monitor",
         accessKey: "f",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_1_submit`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
           doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${site.Name}`, "tab", {});
         },
       },
@@ -411,14 +403,14 @@ let UIFactory = [
           label: "Dismiss",
           accessKey: "d",
           callback: () => {
-            FirefoxMonitor.notifyEventListeners(`variant_1_dismiss`);
+            FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss`);
             showSurvey(browser, false);
           },
         }, {
           label: "Never show breach alerts",
           accessKey: "n",
           callback: () => {
-            FirefoxMonitor.notifyEventListeners(`variant_1_dismiss_permanent`);
+            FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss_permanent`);
             showSurvey(browser, false);
             blurtsDisabled = true;
           },
@@ -477,7 +469,7 @@ let UIFactory = [
       label: "Search Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyEventListeners(`variant_2_submit`);
+        FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
         stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
@@ -494,14 +486,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_2_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_2_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -568,9 +560,9 @@ let UIFactory = [
       accessKey: "f",
       callback: function() {
         if (this._checkbox.checked) {
-          FirefoxMonitor.notifyEventListeners(`variant_3_submit_checked`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit_checked`);
         } else {
-          FirefoxMonitor.notifyEventListeners(`variant_3_submit`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
         }
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
@@ -588,14 +580,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_3_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_3_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -634,7 +626,7 @@ let UIFactory = [
       label: "Go to Firefox Monitor",
       accessKey: "f",
       callback() {
-        FirefoxMonitor.notifyEventListeners(`variant_4_submit`);
+        FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
         doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/`, "tab", {});
       },
     };
@@ -643,7 +635,7 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_4_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss`);
           showSurvey(browser, false);
         },
       },
@@ -736,7 +728,7 @@ let UIFactory = [
       label: "Search Firefox Monitor",
       accessKey: "f",
       callback: function() {
-        FirefoxMonitor.notifyEventListeners(`variant_5_submit`);
+        FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
         let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
           createInstance(Ci.nsIStringInputStream);
         stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
@@ -753,14 +745,14 @@ let UIFactory = [
         label: "Dismiss",
         accessKey: "d",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_5_dismiss`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss`);
           showSurvey(browser, true);
         },
       }, {
         label: "Never show breach alerts",
         accessKey: "n",
         callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_5_dismiss_permanent`);
+          FirefoxMonitor.notifyEventListeners(`${gNotificationID}_dismiss_permanent`);
           blurtsDisabled = true;
           showSurvey(browser, true);
         },
@@ -832,10 +824,10 @@ function surveyFactory(aWithEmail, doc, browser) {
     callback: () => {
       for (let checkbox of retval._checkboxes) {
         if (checkbox.checked) {
-          FirefoxMonitor.notifyEventListeners(`survey_checkbox_${checkbox.getAttribute("telemetryid")}`);
+          FirefoxMonitor.notifyEventListeners(`fxmonitor_survey_checkbox_${checkbox.getAttribute("telemetryid")}`);
         }
       }
-      FirefoxMonitor.notifyEventListeners(`survey_submit`);
+      FirefoxMonitor.notifyEventListeners(`fxmonitor_survey_submit`);
       showThankYou(browser);
     },
   };
@@ -843,7 +835,7 @@ function surveyFactory(aWithEmail, doc, browser) {
     label: "Cancel",
     accessKey: "c",
     callback: () => {
-      FirefoxMonitor.notifyEventListeners(`survey_dismissed`);
+      FirefoxMonitor.notifyEventListeners(`fxmonitor_survey_dismissed`);
     },
   }];
   return retval;
@@ -865,7 +857,7 @@ function surveyGratitudeFactory(doc) {
     label: "Close",
     accessKey: "c",
     callback: () => {
-      FirefoxMonitor.notifyEventListeners("thank_you_dismissed");
+      FirefoxMonitor.notifyEventListeners("fxmonitor_survey_gratitude_dismissed");
     },
   };
   retval.secondaryActions = [];
