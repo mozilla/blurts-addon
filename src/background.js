@@ -26,8 +26,9 @@ let gEventListener = async function(event) {
   }
 
   if (event === "survey_dismissed" || event === "thank_you_dismissed") {
-    if ((await browser.storage.local.get("disabled")).disabled) {
-      await browser.study.endStudy("user-disable");
+    const result = await browser.storage.local.get("disabled");
+    if (result.disabled) {
+      await browser.study.endStudy("perma-dismissed-alert");
     }
   }
 };
@@ -35,7 +36,7 @@ let gEventListener = async function(event) {
 async function init() {
   browser.study.onEndStudy.addListener(async (ending) => {
     let shown = (await browser.storage.local.get("shown")).shown;
-    if (shown) {
+    if (shown && ending.urls.length) {
       await browser.tabs.create({
         url: ending.urls[0],
       });
@@ -43,8 +44,9 @@ async function init() {
     browser.management.uninstallSelf();
   });
   browser.study.onReady.addListener(async (studyInfo) => {
-    if ((await browser.storage.local.get("disabled")).disabled) {
-      await browser.study.endStudy("user-disable");
+    const result = await browser.storage.local.get("disabled");
+    if (result.disabled) {
+      await browser.study.endStudy("perma-dismissed-alert");
       return;
     }
     let warnedSites = (await browser.storage.local.get("warnedSites")).warnedSites;
@@ -92,6 +94,12 @@ async function init() {
         baseUrls: [
           "https://qsurvey.mozilla.com/s3/Firefox-Monitor-Shield-Study-Survey/?reason=expired",
         ],
+      },
+      "perma-dismissed-alert": {
+        baseUrls: [
+          "https://qsurvey.mozilla.com/s3/Shield-Study-Example-Survey/?reason=perma-dismissed-alert",
+        ],
+        category: "ended-negative",
       },
     },
     expire: {
