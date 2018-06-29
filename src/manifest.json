@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Firefox Monitor",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Have your accounts been leaked or stolen in a data breach? Find out with Firefox Monitor, an experimental service created by Mozilla.\n\nMozilla is running this study to evaluate a service that alerts users to potential data breaches. Users in the study will receive a notification when they land on a website that has been affected by a data breach or when they open a new tab in Firefox. Users can then search the Firefox Monitor database to see if their account information was compromised. The information about compromised data comes from our partner in this project, haveibeenpwned.com.\n\nYour email address\nThe Firefox Monitor search tool requires that you enter your email address. Mozilla does not send your email address to any third parties and does not store your email.\n\n\nHow you can disable this study\nIf you don’t want to participate in this study, you can select the Disable button on this page. To disable all studies, you can update your Privacy and Security settings in about:preferences.",
   "background": {
     "scripts": ["background.js"]
