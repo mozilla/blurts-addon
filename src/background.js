@@ -97,7 +97,7 @@ async function init() {
       },
       "perma-dismissed-alert": {
         baseUrls: [
-          "https://qsurvey.mozilla.com/s3/Shield-Study-Example-Survey/?reason=perma-dismissed-alert",
+          "https://qsurvey.mozilla.com/s3/Firefox-Monitor-Shield-Study-Survey/?reason=perma-dismissed-alert",
         ],
         category: "ended-negative",
       },
