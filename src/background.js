@@ -8,23 +8,45 @@ let gEventListener = async function(event) {
     });
     return;
   }
+
+  browser.study.sendTelemetry({event});
+
+  if (event.endsWith("shown")) {
+    await browser.storage.local.set({
+      shown: true,
+    });
+    return;
+  }
+
   if (event.endsWith("dismiss_permanent")) {
     await browser.storage.local.set({
       disabled: true,
     });
+    return;
   }
-  browser.study.sendTelemetry({event});
+
+  if (event === "survey_dismissed" || event === "thank_you_dismissed") {
+    if ((await browser.storage.local.get("disabled")).disabled) {
+      await browser.study.endStudy("user-disable");
+    }
+  }
 };
 
 async function init() {
-  const result = await browser.storage.local.get("disabled");
-  if (result.disabled) {
-    return;
-  }
-  browser.study.onEndStudy.addListener((ending) => {
-
+  browser.study.onEndStudy.addListener(async (ending) => {
+    let shown = (await browser.storage.local.get("shown")).shown;
+    if (shown) {
+      await browser.tabs.create({
+        url: ending.urls[0],
+      });
+    }
+    browser.management.uninstallSelf();
   });
   browser.study.onReady.addListener(async (studyInfo) => {
+    if ((await browser.storage.local.get("disabled")).disabled) {
+      await browser.study.endStudy("user-disable");
+      return;
+    }
     let warnedSites = (await browser.storage.local.get("warnedSites")).warnedSites;
     warnedSites = warnedSites ? warnedSites.join() : "";
     browser.blurts.start(studyInfo.variation.name, warnedSites, studyInfo.firstRunTimestamp);
@@ -63,17 +85,12 @@ async function init() {
     endings: {
       "user-disable": {
         baseUrls: [
-          "https://qsurvey.mozilla.com/s3/Shield-Study-Example-Survey/?reason=user-disable",
-        ],
-      },
-      ineligible: {
-        baseUrls: [
-          "https://qsurvey.mozilla.com/s3/Shield-Study-Example-Survey/?reason=ineligible",
+          "https://qsurvey.mozilla.com/s3/Firefox-Monitor-Shield-Study-Survey/?reason=user-disable",
         ],
       },
       expired: {
         baseUrls: [
-          "https://qsurvey.mozilla.com/s3/Shield-Study-Example-Survey/?reason=expired",
+          "https://qsurvey.mozilla.com/s3/Firefox-Monitor-Shield-Study-Survey/?reason=expired",
         ],
       },
     },

@@ -626,14 +626,6 @@ let UIFactory = [
           FirefoxMonitor.notifyEventListeners(`variant_4_dismiss`);
           showSurvey(browser, false);
         },
-      }, {
-        label: "Never show breach alerts",
-        accessKey: "n",
-        callback: () => {
-          FirefoxMonitor.notifyEventListeners(`variant_4_dismiss_permanent`);
-          blurtsDisabled = true;
-          showSurvey(browser, false);
-        },
       },
     ];
     return retval;
@@ -823,6 +815,7 @@ function surveyFactory(aWithEmail, doc, browser) {
           FirefoxMonitor.notifyEventListeners(`survey_checkbox_${checkbox.getAttribute("telemetryid")}`);
         }
       }
+      FirefoxMonitor.notifyEventListeners(`survey_submit`);
       showThankYou(browser);
     },
   };
@@ -852,6 +845,7 @@ function surveyGratitudeFactory(doc) {
     label: "Close",
     accessKey: "c",
     callback: () => {
+      FirefoxMonitor.notifyEventListeners("thank_you_dismissed");
     },
   };
   retval.secondaryActions = [];
