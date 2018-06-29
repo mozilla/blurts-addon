@@ -2,6 +2,8 @@ ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "Preferences",
                                "resource://gre/modules/Preferences.jsm");
+ChromeUtils.defineModuleGetter(this, "AddonManager",
+                               "resource://gre/modules/AddonManager.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const imageDataURIs = {
@@ -125,6 +127,24 @@ this.FirefoxMonitor = {
         },
       });
     });
+
+    AddonManager.addAddonListener(this);
+  },
+
+  onUninstalling(addon) {
+    this.handleDisableOrUninstall(addon);
+  },
+
+  onDisabled(addon) {
+    this.handleDisableOrUninstall(addon);
+  },
+
+  handleDisableOrUninstall(addon) {
+    if (addon.id !== gExtension.id) {
+      return;
+    }
+    AddonManager.removeAddonListener(this);
+    addon.uninstall();
   },
 
   eventListeners: new Set(),
