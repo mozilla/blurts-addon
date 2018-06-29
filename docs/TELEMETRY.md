@@ -33,16 +33,18 @@ Events instrumented in this study:
 
 * UI
 
-  * When popups are shown (where x is the variant ranging from 1 to 5):
-    * variant_x_shown
-    * survey_variant_x_shown
+  * When popups are shown:
+    * fxmonitor_alert_shown
+    * fxmonitor_survey_shown
+    * fxmonitor_survey_gratitude_shown
 
 * Interactions
-  * When popup notification primary action is triggered: variant_x_submit
-  * When the "Dismiss" secondary action is triggered: variant_x_dismiss
-  * when the "Never show breach alerts" secondary action is triggered: variant_x_dismiss_permanent
-  * When the survey popup is submitted, there's one sent for every selected checkbox: survey_checkbox_<checkboxid>
-  * When the survey popup is dismissed: survey_dismissed
+  * When popup notification primary action is triggered: fxmonitor_alert_submit
+  * When the "Dismiss" secondary action is triggered: fxmonitor_alert_dismiss
+  * when the "Never show breach alerts" secondary action is triggered: fxmonitor_alert_dismiss_permanent
+  * When the survey popup is submitted, there's one sent for every selected checkbox: fxmonitor_survey_checkbox_<checkboxid>
+  * When the survey popup is dismissed: fxmonitor_survey_dismissed
+  * When the thank you popup is dismissed: fxmonitor_survey_gratitude_dismissed
 
 All interactions with the UI create sequences of Telemetry Pings.
 
