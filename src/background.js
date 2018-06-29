@@ -36,10 +36,10 @@ let gEventListener = async function(event) {
 async function init() {
   browser.study.onEndStudy.addListener(async (ending) => {
     let shown = (await browser.storage.local.get("shown")).shown;
-    if (shown && ending.urls.length) {
-      await browser.tabs.create({
-        url: ending.urls[0],
-      });
+    if (shown) {
+      for (const url of ending.urls) {
+        await browser.tabs.create({ url });
+      }
     }
     browser.management.uninstallSelf();
   });
@@ -60,7 +60,7 @@ async function init() {
     studyType: "shield",
     telemetry: {
       send: true,
-      removeTestingFlag: false,
+      removeTestingFlag: true,
     },
     weightedVariations: [
       {
