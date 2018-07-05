@@ -6,89 +6,6 @@ Cu.importGlobalProperties(["fetch"]);
 
 let gExtension;
 
-function sha1(str) {
-  let converter =
-    Cc["@mozilla.org/intl/scriptableunicodeconverter"]
-      .createInstance(Ci.nsIScriptableUnicodeConverter);
-  converter.charset = "UTF-8";
-  let result = {};
-  let data = converter.convertToByteArray(str, result);
-  let ch = Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
-  ch.init(ch.SHA1);
-  ch.update(data, data.length);
-  let hash = ch.finish(false);
-  function toHexString(charCode) {
-    return ("0" + charCode.toString(16)).slice(-2);
-  }
-  return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
-}
-
-function isEmailValid(val) {
-  // https://stackoverflow.com/a/46181
-  const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return re.test(String(val).toLowerCase());
-}
-
-const handleInputs = function(event, textbox, doc, browser, checkboxChecked) {
-  function showInvalidMessage() {
-    textbox.style.borderStyle = "solid";
-    textbox.style.borderColor = "#d70022cc";
-    textbox.style.borderWidth = "1px";
-    textbox.placeholder = "Please enter a valid email.";
-    textbox.style.boxShadow = "1px 0px 4px #d7002233";
-    textbox.style.transition = "all 0.2s ease";
-  }
-
-  function clearInvalidMessage() {
-    textbox.style.borderStyle = "solid";
-    textbox.style.borderColor = "rgba(12, 12, 13, 0.30)";
-    textbox.style.borderWidth = "1px";
-    textbox.placeholder = "Please enter a valid email.";
-    textbox.style.boxShadow = "1px 0px 4px rgba(12, 12, 13, 0.05)";
-    textbox.style.transition = "all 0.2s ease";
-  }
-
-  function submit(emailString) {
-    doc.defaultView.PopupNotifications.getNotification(gNotificationID, browser).remove();
-    if (emailString) {
-      let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
-      createInstance(Ci.nsIStringInputStream);
-      let hashedEmail = sha1(emailString);
-      stringStream.data = `emailHash=${hashedEmail}&signup=${checkboxChecked || ""}`;
-      let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
-        createInstance(Ci.nsIMIMEInputStream);
-      postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
-      postData.setData(stringStream);
-      doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
-    } else {
-      doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/", "tab", {});
-    }
-    FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit${checkboxChecked ? "_checked" : ""}`);
-  }
-
-  clearInvalidMessage(textbox);
-  // Make sure we don't show the "x" button, it's problematic because it fires
-  // a command event that we can't really distinguish from an "enter" keypress.
-  textbox._searchIcons.selectedIndex = 0;
-  const button = doc.getAnonymousElementByAttribute(
-    doc.getElementById(`${gNotificationID}-notification`), "anonid", "button");
-  const evtWasCommand = event.type === "command";
-  const email = textbox.value;
-  if (email && isEmailValid(email)) {
-    if (evtWasCommand) {
-      submit(email);
-      return;
-    }
-    button.removeAttribute("disabled");
-    return;
-  }
-  if (evtWasCommand) {
-    showInvalidMessage(textbox);
-  }
-  button.setAttribute("disabled", "true");
-};
-
-
 this.FirefoxMonitor = {
   init(aExtension, aVariation, warnedSites, firstRunTimestamp) {
     gExtension = aExtension;
@@ -291,23 +208,12 @@ const HTML_NS = "http://www.w3.org/1999/xhtml";
 let UIFactory = [
   function(browser, doc, host, site) {
     let retval = {
-      _textbox: null,
       get box() {
         let box = doc.createElementNS(XUL_NS, "vbox");
         let elt = doc.createElementNS(XUL_NS, "description");
         elt.setAttribute("anonid", "maindesc");
         elt.appendChild(doc.createTextNode("Have an account? It may be at risk."));
-        elt.setAttribute("style", "font-size: 150%; white-space: pre; margin-bottom: 1rem;");
-        box.appendChild(elt);
-        elt = doc.createElementNS(XUL_NS, "description");
-        let strings = [
-          {str: "This website was reported to "},
-          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${site.Name}`},
-          {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
-        ];
-        elt.appendChild(makeSpanWithLinks(strings, doc));
-        elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
-        elt.setAttribute("style", "white-space: pre-wrap; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
+        elt.setAttribute("style", "font-size: 150%; white-space: pre; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "hbox");
         elt.setAttribute("style", "margin-bottom: 1rem;");
@@ -346,44 +252,25 @@ let UIFactory = [
         elt.setAttribute("style", "margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
         box.appendChild(elt);
         elt = doc.createElementNS(XUL_NS, "description");
-        strings = [
-          {str: "Enter your email to find out if your account was included in a data breach."},
-          {str: "\n(Note: Your email will not be stored.)"},
+        let strings = [
+          {str: "This website was reported to "},
+          {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=${site.Name}`},
+          {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
         ];
         elt.appendChild(makeSpanWithLinks(strings, doc));
-        box.appendChild(elt);
-        elt = doc.createElementNS(XUL_NS, "textbox");
-        elt.setAttribute("type", "search");
-        elt.setAttribute("searchbutton", "true");
-        elt.setAttribute("style", "-moz-appearance: none; height: 2.75rem; line-height: 2.5rem; white-space:nowrap; overflow:hidden; padding: 0.5rem; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(12,12,13,0.30); border-radius: 2px;");
-        elt.setAttribute("placeholder", "Enter Email");
-        elt.setAttribute("id", "emailToHash");
-        elt.addEventListener("input", function listener(event) {
-          handleInputs(event, elt, doc, browser);
-        });
-        elt.addEventListener("command", function listener(event) {
-          handleInputs(event, elt, doc, browser);
-        });
-        this._textbox = elt;
+        elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
+        elt.setAttribute("style", "white-space: pre-wrap; padding-bottom: 1rem;");
         box.appendChild(elt);
         return box;
       },
     };
     retval.primaryAction = {
-      label: "Search Firefox Monitor",
+      label: "Go to Firefox Monitor",
       accessKey: "f",
-      callback: function() {
+      callback() {
         FirefoxMonitor.notifyEventListeners(`${gNotificationID}_submit`);
-        let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
-          createInstance(Ci.nsIStringInputStream);
-        stringStream.data = `emailHash=${sha1(this._textbox.value)}`;
-
-        let postData = Cc["@mozilla.org/network/mime-input-stream;1"].
-          createInstance(Ci.nsIMIMEInputStream);
-        postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
-        postData.setData(stringStream);
-        doc.defaultView.openTrustedLinkIn("https://monitor.firefox.com/scan", "tab", { postData });
-      }.bind(retval),
+        doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${site.Name}`, "tab", { });
+      },
     };
     retval.secondaryActions = [
       {
