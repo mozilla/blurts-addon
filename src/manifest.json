@@ -13,17 +13,9 @@
     }
   },
 
-  "permissions": ["storage", "management"],
+  "permissions": [],
 
   "experiment_apis": {
-    "study": {
-      "schema": "./privileged/study/schema.json",
-      "parent": {
-        "scopes": ["addon_parent"],
-        "script": "./privileged/study/api.js",
-        "paths": [["study"]]
-      }
-    },
     "blurts": {
       "schema": "./privileged/blurts/schema.json",
       "parent": {

@@ -1,13 +1,11 @@
 ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "AddonManager",
-                               "resource://gre/modules/AddonManager.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 let gExtension;
 
 this.FirefoxMonitor = {
-  init(aExtension, aVariation, warnedSites, firstRunTimestamp) {
+  init(aExtension, warnedSites) {
     gExtension = aExtension;
     ChromeUtils.defineModuleGetter(this, "EveryWindow",
                                    gExtension.getURL("privileged/blurts/EveryWindow.jsm"));
@@ -16,118 +14,81 @@ this.FirefoxMonitor = {
       warnedHostSet = new Set(warnedSites);
     }
 
-    fetch(gExtension.getURL("breaches.json")).then(function(response) {
+    fetch(gExtension.getURL("breaches.json")).then((response) => {
       return response.json();
-    }).then(function(sites) {
+    }).then((sites) => {
       for (let site of sites) {
         domainMap.set(site.Domain.toLowerCase(), { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
       }
-      startObserving();
+      this.startObserving();
       aExtension.callOnClose({
         close: () => {
-          stopObserving();
+          this.stopObserving();
         },
       });
     });
-
-    AddonManager.addAddonListener(this);
   },
 
-  onUninstalling(addon) {
-    this.handleDisableOrUninstall(addon);
-  },
+  observerAdded: false,
 
-  onDisabled(addon) {
-    this.handleDisableOrUninstall(addon);
-  },
+  startObserving() {
+    const newtabURL = "about:newtab";
 
-  handleDisableOrUninstall(addon) {
-    if (addon.id !== gExtension.id) {
-      return;
+    const tpl = {
+      onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+        let location = aRequest.URI;
+        if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
+            !Components.isSuccessCode(aStatus)) {
+          return;
+        }
+        let host;
+        try {
+          host = Services.eTLD.getBaseDomain(location);
+        } catch (e) {
+        }
+        if (!host) return;
+        warnIfNeeded(aBrowser, host);
+      },
+      onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
+        if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
+          return;
+        }
+        warnIfNeeded(aBrowser, newtabURL);
+      },
+    };
+
+    function tol(openEvent) {
+      const browser = openEvent.target.linkedBrowser;
+      if (browser.currentURI.spec !== newtabURL) {
+        return;
+      }
+      warnIfNeeded(browser, newtabURL);
     }
-    AddonManager.removeAddonListener(this);
-    // This is needed even for onUninstalling, because it nukes the addon
-    // from UI. If we don't do this, the user has a chance to "undo".
-    addon.uninstall();
+
+    this.EveryWindow.registerCallback(
+      "breach-alerts",
+      (win) => {
+        setupPopupPanel(win.document);
+        win.gBrowser.addTabsProgressListener(tpl);
+        win.gBrowser.tabContainer.addEventListener("TabOpen", tol);
+      },
+      (win) => {
+        if (!win.gBrowser) {
+          return;
+        }
+        win.gBrowser.removeTabsProgressListener(tpl);
+        win.gBrowser.tabContainer.removeEventListener("TabOpen", tol);
+      },
+    );
+    this.observerAdded = true;
   },
 
-  eventListeners: new Set(),
-
-  addEventListener(aListener) {
-    this.eventListeners.add(aListener);
-  },
-
-  removeEventListener(aListener) {
-    this.eventListeners.delete(aListener);
-  },
-
-  notifyEventListeners(id) {
-    for (let cb of this.eventListeners) {
-      cb(id);
+  stopObserving() {
+    if (this.observerAdded) {
+      this.EveryWindow.unregisterCallback("breach-alerts");
     }
   },
 };
-
-
-let observerAdded = false;
-
-function startObserving() {
-  const newtabURL = "about:newtab";
-
-  const tpl = {
-    onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-      let location = aRequest.URI;
-      if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
-          !Components.isSuccessCode(aStatus)) {
-        return;
-      }
-      let host;
-      try {
-        host = Services.eTLD.getBaseDomain(location);
-      } catch (e) {
-      }
-      if (!host) return;
-      warnIfNeeded(aBrowser, host);
-    },
-    onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-      if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
-        return;
-      }
-      warnIfNeeded(aBrowser, newtabURL);
-    },
-  };
-
-  function tol(openEvent) {
-    const browser = openEvent.target.linkedBrowser;
-    if (browser.currentURI.spec !== newtabURL) {
-      return;
-    }
-    warnIfNeeded(browser, newtabURL);
-  }
-
-  FirefoxMonitor.EveryWindow.registerCallback(
-    "breach-alerts",
-    (win) => {
-      setupPopupPanel(win.document);
-      win.gBrowser.addTabsProgressListener(tpl);
-      win.gBrowser.tabContainer.addEventListener("TabOpen", tol);
-    },
-    (win) => {
-      if (!win.gBrowser) {
-        return;
-      }
-      win.gBrowser.removeTabsProgressListener(tpl);
-      win.gBrowser.tabContainer.removeEventListener("TabOpen", tol);
-    },
-  );
-  observerAdded = true;
-}
-
-function stopObserving() {
-  if (observerAdded) {
-    FirefoxMonitor.EveryWindow.unregisterCallback("breach-alerts");
-  }
-}
 
 let domainMap = new Map();
 let warnedHostSet = new Set();
@@ -145,7 +106,6 @@ function warnIfNeeded(browser, host) {
   }
 
   warnedHostSet.add(host);
-  FirefoxMonitor.notifyEventListeners("warned_site_" + host);
 
   showPanel(browser);
 }
@@ -167,7 +127,6 @@ function showPanel(browser) {
   doc.defaultView.PopupNotifications.show(
     browser, gNotificationID, "",
     null, panelUI.primaryAction, panelUI.secondaryActions, {persistent: true, hideClose: true, eventCallback: populatePanel});
-  FirefoxMonitor.notifyEventListeners(`${gNotificationID}_shown`);
 }
 
 function makeSpanWithLinks(aStrParts, doc) {

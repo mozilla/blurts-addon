@@ -1,6 +1,6 @@
 {
   "name": "blurts-addon",
-  "description": "Firefox Monitor Shield Study",
+  "description": "Firefox Monitor",
   "version": "1.0.0",
   "author": "Mozilla",
   "bugs": {
@@ -9,7 +9,6 @@
   "dependencies": {
     "imagemin-cli": "^3.0.0",
     "node-fetch": "^2.1.2",
-    "shield-studies-addon-utils": "github:mozilla/shield-studies-addon-utils#release/5.0.3",
     "svgo": "^1.0.5"
   },
   "devDependencies": {
@@ -27,8 +26,7 @@
   "homepage": "https://github.com/mozilla/blurts-addon",
   "keywords": [
     "firefox",
-    "mozilla",
-    "shield-study"
+    "mozilla"
   ],
   "license": "MPL-2.0",
   "private": true,
@@ -38,14 +36,10 @@
   },
   "scripts": {
     "build": "web-ext build",
-    "bundle-utils": "copyStudyUtils src/privileged",
     "eslint": "eslint . --ext jsm,js,json",
     "lint": "npm-run-all lint:*",
     "lint:eslint": "npm run eslint",
     "lint:web-ext-lint": "web-ext lint",
-    "prebuild": "npm run bundle-utils",
-    "prestart": "npm run bundle-utils",
-    "prewatch": "npm run bundle-utils",
     "setup-breaches": "node scripts/setup-breaches.js && node_modules/svgo/bin/svgo -q src/PwnedLogos/*.svg && imagemin src/PwnedLogos/*.png --out-dir=src/PwnedLogos",
     "sign": "echo 'TBD, see: https://bugzilla.mozilla.org/show_bug.cgi?id=1407757'",
     "start": "web-ext run --no-reload",

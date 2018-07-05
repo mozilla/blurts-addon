@@ -1,1 +1,1 @@
-browser.blurts.start("", "", 0);
+browser.blurts.start();
