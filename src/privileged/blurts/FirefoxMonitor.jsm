@@ -2,23 +2,31 @@ ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
+const gNotificationID = "fxmonitor_alert";
+
 let gExtension;
 
 this.FirefoxMonitor = {
+  domainMap: new Map(),
+  warnedHostSet: new Set(),
+  blurtsDisabled: false,
+  observerAdded: false,
+  newtabURL: "about:newtab",
+
   init(aExtension, warnedSites) {
     gExtension = aExtension;
     ChromeUtils.defineModuleGetter(this, "EveryWindow",
                                    gExtension.getURL("privileged/blurts/EveryWindow.jsm"));
 
     if (warnedSites) {
-      warnedHostSet = new Set(warnedSites);
+      this.warnedHostSet = new Set(warnedSites);
     }
 
     fetch(gExtension.getURL("breaches.json")).then((response) => {
       return response.json();
     }).then((sites) => {
       for (let site of sites) {
-        domainMap.set(site.Domain.toLowerCase(), { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses, logoSrc: `${site.Name}.${site.LogoType}` });
+        this.domainMap.set(site.Domain.toLowerCase(), { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses.join(", "), logoSrc: `${site.Name}.${site.LogoType}` });
       }
       this.startObserving();
       aExtension.callOnClose({
@@ -29,59 +37,69 @@ this.FirefoxMonitor = {
     });
   },
 
-  observerAdded: false,
+  onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+    let location = aRequest.URI;
+    if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
+        !Components.isSuccessCode(aStatus)) {
+      return;
+    }
+    let host;
+    try {
+      host = Services.eTLD.getBaseDomain(location);
+    } catch (e) {
+    }
+    if (!host) return;
+    this.warnIfNeeded(aBrowser, host);
+  },
+
+  onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
+    if (!aWebProgress.isTopLevel || aLocation.spec !== this.newtabURL) {
+      return;
+    }
+    this.warnIfNeeded(aBrowser, this.newtabURL);
+  },
 
   startObserving() {
-    const newtabURL = "about:newtab";
-
-    const tpl = {
-      onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-        let location = aRequest.URI;
-        if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
-            !Components.isSuccessCode(aStatus)) {
-          return;
-        }
-        let host;
-        try {
-          host = Services.eTLD.getBaseDomain(location);
-        } catch (e) {
-        }
-        if (!host) return;
-        warnIfNeeded(aBrowser, host);
-      },
-      onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-        if (!aWebProgress.isTopLevel || aLocation.spec !== newtabURL) {
-          return;
-        }
-        warnIfNeeded(aBrowser, newtabURL);
-      },
-    };
-
-    function tol(openEvent) {
-      const browser = openEvent.target.linkedBrowser;
-      if (browser.currentURI.spec !== newtabURL) {
+    const tol = (event) => {
+      const browser = event.target.linkedBrowser;
+      if (browser.currentURI.spec !== this.newtabURL) {
         return;
       }
-      warnIfNeeded(browser, newtabURL);
-    }
-
+      this.warnIfNeeded(browser, this.newtabURL);
+    };
     this.EveryWindow.registerCallback(
       "breach-alerts",
       (win) => {
+        // Inject our stylesheet.
         const DOMWindowUtils =
           win.QueryInterface(Ci.nsIInterfaceRequestor)
              .getInterface(Ci.nsIDOMWindowUtils);
         DOMWindowUtils.loadSheetUsingURIString(gExtension.getURL("privileged/blurts/FirefoxMonitor.css"),
                                                DOMWindowUtils.AUTHOR_SHEET);
-        setupPopupPanel(win.document);
-        win.gBrowser.addTabsProgressListener(tpl);
+
+        // Setup the popup notification.
+        let doc = win.document;
+        let parentElt = doc.defaultView.PopupNotifications.panel.parentNode;
+        let pn = doc.createElementNS(XUL_NS, "popupnotification");
+        let pnContent = doc.createElementNS(XUL_NS, "popupnotificationcontent");
+
+        let panelUI = new PanelUI(doc);
+        pnContent.appendChild(panelUI.box);
+        pn.appendChild(pnContent);
+        pn.setAttribute("id", `${gNotificationID}-notification`);
+        pn.setAttribute("hidden", "true");
+        parentElt.appendChild(pn);
+        win.FirefoxMonitorPanelUI = panelUI;
+
+        // Start listening!
+        win.gBrowser.addTabsProgressListener(this);
         win.gBrowser.tabContainer.addEventListener("TabOpen", tol);
       },
       (win) => {
         if (!win.gBrowser) {
           return;
         }
-        win.gBrowser.removeTabsProgressListener(tpl);
+        win.gBrowser.removeTabsProgressListener(this);
         win.gBrowser.tabContainer.removeEventListener("TabOpen", tol);
       },
     );
@@ -93,143 +111,135 @@ this.FirefoxMonitor = {
       this.EveryWindow.unregisterCallback("breach-alerts");
     }
   },
-};
 
-let domainMap = new Map();
-let warnedHostSet = new Set();
-let blurtsDisabled = false;
-
-const gNotificationID = "fxmonitor_alert";
-
-function warnIfNeeded(browser, host) {
-  if (blurtsDisabled || warnedHostSet.has(host)) {
-    return;
-  }
-
-  if (!domainMap.has(host)) {
-    return;
-  }
-
-  warnedHostSet.add(host);
-
-  showPanel(browser);
-}
-
-function showPanel(browser) {
-  let doc = browser.ownerDocument;
-
-  let populatePanel = (event) => {
-    if (event !== "shown") {
+  warnIfNeeded(browser, host) {
+    if (this.blurtsDisabled || this.warnedHostSet.has(host)) {
       return;
     }
-  };
 
-  doc.defaultView.PopupNotifications.show(
-    browser, gNotificationID, "",
-    null, panelUI.primaryAction, panelUI.secondaryActions,
-    {persistent: true, hideClose: true, eventCallback: populatePanel});
-}
-
-function makeSpanWithLinks(aStrParts, doc) {
-  let spanElt = doc.createElementNS(HTML_NS, "span");
-  for (let str of aStrParts) {
-    if (!str.link) {
-      spanElt.appendChild(doc.createTextNode(str.str));
-      continue;
+    if (!this.domainMap.has(host)) {
+      return;
     }
-    let anchor = doc.createElementNS(HTML_NS, "a");
-    anchor.setAttribute("href", str.link);
-    anchor.addEventListener("click", (event) => {
-      event.preventDefault();
-      doc.defaultView.openTrustedLinkIn(str.link, "tab", {});
-    });
-    anchor.appendChild(doc.createTextNode(str.str));
-    spanElt.appendChild(anchor);
-  }
-  return spanElt;
-}
+
+    this.warnedHostSet.add(host);
+
+    let doc = browser.ownerDocument;
+    let panelUI = doc.defaultView.FirefoxMonitorPanelUI;
+
+    let populatePanel = (event) => {
+      if (event !== "showing") {
+        return;
+      }
+      panelUI.refresh(this.domainMap.get(host));
+    };
+
+    doc.defaultView.PopupNotifications.show(
+      browser, gNotificationID, "",
+      null, panelUI.primaryAction, panelUI.secondaryActions,
+      {persistent: true, hideClose: true, eventCallback: populatePanel});
+  },
+};
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 
-const panelUI = {
+function PanelUI(doc) {
+  this.doc = doc;
+  const box = doc.createElementNS(XUL_NS, "vbox");
+  box.className = "container";
+
+  let elt, elt2, elt3;
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  elt.appendChild(doc.createTextNode("Have an account? It may be at risk."));
+  elt.classList.add("headerText", "bottomBorder");
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "hbox");
+    elt2 = doc.createElementNS(XUL_NS, "image");
+    elt2.setAttribute("flex", "0");
+    elt2.className = "breachLogo";
+    this.logoElt = elt2;
+    elt.appendChild(elt2);
+
+    elt2 = doc.createElementNS(XUL_NS, "vbox");
+    elt2.setAttribute("align", "start");
+      elt3 = doc.createElementNS(XUL_NS, "description");
+      elt3.className = "headerText";
+      this.breachNameElt = elt3;
+      elt2.appendChild(elt3);
+
+      elt3 = doc.createElementNS(XUL_NS, "description");
+      elt3.className = "redText";
+      elt3.appendChild(doc.createTextNode("Breach Date"));
+      elt2.appendChild(elt3);
+
+      elt3 = doc.createElementNS(XUL_NS, "description");
+      this.breachDateElt = elt3;
+      elt2.appendChild(elt3);
+    elt.appendChild(elt2);
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  elt.className = "redText";
+  elt.appendChild(doc.createTextNode("Compromised Accounts"));
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  this.pwnCountElt = elt;
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  elt.className = "redText";
+  elt.appendChild(doc.createTextNode("Compromised Data"));
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  elt.className = "bottomBorder";
+  this.breachDataElt = elt;
+  box.appendChild(elt);
+
+  elt = doc.createElementNS(XUL_NS, "description");
+  elt2 = doc.createElementNS(HTML_NS, "span");
+    elt2.appendChild(doc.createTextNode("This website was reported to "));
+
+    elt3 = doc.createElementNS(HTML_NS, "a");
+      elt3.addEventListener("click", (event) => {
+        event.preventDefault();
+        doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", {});
+      });
+      elt3.appendChild(doc.createTextNode("Firefox Monitor"));
+      this.monitorLink = elt3;
+    elt2.appendChild(elt3);
+
+    elt2.appendChild(doc.createTextNode(", a service that collects information about data breaches and other ways hackers can steal your information."));
+  elt.appendChild(elt2);
+  elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
+  elt.className = "specialStuff";
+  box.appendChild(elt);
+
+  this.box = box;
+}
+
+PanelUI.prototype = {
   box: null,
+  logoElt: null,
+  breachNameElt: null,
+  breachDateElt: null,
+  pwnCountElt: null,
+  breachDataElt: null,
+  monitorLink: null,
   doc: null,
+  site: null,
 
-  init(doc) {
-    this.doc = doc;
-    const box = doc.createElementNS(XUL_NS, "vbox");
-    box.className = "container";
-
-    let elt = doc.createElementNS(XUL_NS, "description");
-    elt.appendChild(doc.createTextNode("Have an account? It may be at risk."));
-    elt.classList.add("headerText", "bottomBorder");
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "hbox");
-      let elt2 = doc.createElementNS(XUL_NS, "image");
-      elt2.setAttribute("flex", "0");
-      elt2.style.backgroundImage = `url(${gExtension.getURL("PwnedLogos/7k7k.png")})`;
-      elt2.className = "breachLogo";
-      elt.appendChild(elt2);
-
-      elt2 = doc.createElementNS(XUL_NS, "vbox");
-      elt2.setAttribute("align", "start");
-        let elt3 = doc.createElementNS(XUL_NS, "description");
-        elt3.appendChild(doc.createTextNode("Test"));
-        elt3.className = "headerText";
-        elt2.appendChild(elt3);
-
-        elt3 = doc.createElementNS(XUL_NS, "description");
-        elt3.className = "redText";
-        elt3.appendChild(doc.createTextNode("Breach Date"));
-        elt2.appendChild(elt3);
-
-        elt3 = doc.createElementNS(XUL_NS, "description");
-        elt3.appendChild(doc.createTextNode("Test Date"));
-        elt2.appendChild(elt3);
-      elt.appendChild(elt2);
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "description");
-    elt.className = "redText";
-    elt.appendChild(doc.createTextNode("Compromised Accounts"));
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "description");
-    elt.appendChild(doc.createTextNode("Test Pwn Count"));
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "description");
-    elt.className = "redText";
-    elt.appendChild(doc.createTextNode("Compromised Data"));
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "description");
-    elt.appendChild(doc.createTextNode("Test Data Classes"));
-    elt.className = "bottomBorder";
-    box.appendChild(elt);
-
-    elt = doc.createElementNS(XUL_NS, "description");
-    const strings = [
-      {str: "This website was reported to "},
-      {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=Adobe`},
-      {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
-    ];
-    elt.appendChild(makeSpanWithLinks(strings, doc));
-    elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
-    elt.className = "specialStuff";
-    box.appendChild(elt);
-
-    this.box = box;
-  },
-
-  primaryAction: {
-    label: "Go to Firefox Monitor",
-    accessKey: "f",
-    callback() {
-      panelUI.doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=Adobe`, "tab", { });
-    },
+  get primaryAction() {
+    return {
+      label: "Go to Firefox Monitor",
+      accessKey: "f",
+      callback: () => {
+        this.doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", { });
+      },
+    };
   },
 
   secondaryActions: [
@@ -241,22 +251,36 @@ const panelUI = {
       label: "Never show breach alerts",
       accessKey: "n",
       callback: () => {
-        blurtsDisabled = true;
+        FirefoxMonitor.blurtsDisabled = true;
       },
     },
   ],
-};
 
-function setupPopupPanel(doc) {
-  let parentElt = doc.defaultView.PopupNotifications.panel.parentNode;
-  let pn = doc.createElementNS(XUL_NS, "popupnotification");
-  let pnContent = doc.createElementNS(XUL_NS, "popupnotificationcontent");
-  panelUI.init(doc);
-  pnContent.appendChild(panelUI.box);
-  pn.appendChild(pnContent);
-  pn.setAttribute("id", `${gNotificationID}-notification`);
-  pn.setAttribute("hidden", "true");
-  parentElt.appendChild(pn);
-}
+  refresh(site) {
+    this.site = site;
+
+    const doc = this.doc;
+
+    this.logoElt.style.backgroundImage = `url(${gExtension.getURL(`PwnedLogos/${site.logoSrc}`)}`;
+
+    function clearChildren(elt) {
+      while (elt.firstChild) elt.firstChild.remove();
+    }
+
+    clearChildren(this.breachNameElt);
+    this.breachNameElt.appendChild(doc.createTextNode(site.Name));
+
+    clearChildren(this.breachDateElt);
+    this.breachDateElt.appendChild(doc.createTextNode(site.BreachDate));
+
+    clearChildren(this.pwnCountElt);
+    this.pwnCountElt.appendChild(doc.createTextNode(site.PwnCount.toLocaleString()));
+
+    clearChildren(this.breachDataElt);
+    this.breachDataElt.appendChild(doc.createTextNode(site.DataClasses));
+
+    this.monitorLink.setAttribute("href", `https://monitor.firefox.com/?breach=${site.Name}`);
+  },
+};
 
 const EXPORTED_SYMBOLS = ["FirefoxMonitor"];
