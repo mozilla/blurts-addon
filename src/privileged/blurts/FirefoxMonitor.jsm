@@ -68,6 +68,11 @@ this.FirefoxMonitor = {
     this.EveryWindow.registerCallback(
       "breach-alerts",
       (win) => {
+        const DOMWindowUtils =
+          win.QueryInterface(Ci.nsIInterfaceRequestor)
+             .getInterface(Ci.nsIDOMWindowUtils);
+        DOMWindowUtils.loadSheetUsingURIString(gExtension.getURL("privileged/blurts/FirefoxMonitor.css"),
+                                               DOMWindowUtils.AUTHOR_SHEET);
         setupPopupPanel(win.document);
         win.gBrowser.addTabsProgressListener(tpl);
         win.gBrowser.tabContainer.addEventListener("TabOpen", tol);
@@ -117,16 +122,12 @@ function showPanel(browser) {
     if (event !== "shown") {
       return;
     }
-    const icon = doc.getAnonymousElementByAttribute(doc.getElementById(`${gNotificationID}-notification`),
-                                                    "class", "popup-notification-icon");
-    if (icon) {
-      icon.style.display = "none";
-    }
   };
 
   doc.defaultView.PopupNotifications.show(
     browser, gNotificationID, "",
-    null, panelUI.primaryAction, panelUI.secondaryActions, {persistent: true, hideClose: true, eventCallback: populatePanel});
+    null, panelUI.primaryAction, panelUI.secondaryActions,
+    {persistent: true, hideClose: true, eventCallback: populatePanel});
 }
 
 function makeSpanWithLinks(aStrParts, doc) {
@@ -137,7 +138,6 @@ function makeSpanWithLinks(aStrParts, doc) {
       continue;
     }
     let anchor = doc.createElementNS(HTML_NS, "a");
-    anchor.setAttribute("style", "color: #0060DF");
     anchor.setAttribute("href", str.link);
     anchor.addEventListener("click", (event) => {
       event.preventDefault();
@@ -155,64 +155,75 @@ const HTML_NS = "http://www.w3.org/1999/xhtml";
 const panelUI = {
   box: null,
   doc: null,
+
   init(doc) {
     this.doc = doc;
-    let box = doc.createElementNS(XUL_NS, "vbox");
-    box.setAttribute("style", "max-width: 1px;");
+    const box = doc.createElementNS(XUL_NS, "vbox");
+    box.className = "container";
+
     let elt = doc.createElementNS(XUL_NS, "description");
-    elt.setAttribute("anonid", "maindesc");
     elt.appendChild(doc.createTextNode("Have an account? It may be at risk."));
-    elt.setAttribute("style", "font-size: 150%; white-space: pre; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
+    elt.classList.add("headerText", "bottomBorder");
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "hbox");
-    elt.setAttribute("style", "margin-bottom: 1rem;");
-    let elt2 = doc.createElementNS(XUL_NS, "image");
-    elt2.setAttribute("flex", "0");
-    elt2.setAttribute("style", `width: 64px; margin-inline-start: 6px; margin-inline-end: 5px; background: url(${gExtension.getURL("PwnedLogos/Adobe.svg")}) no-repeat; background-size: contain; background-position: center;`);
-    elt.appendChild(elt2);
-    elt2 = doc.createElementNS(XUL_NS, "vbox");
-    elt2.setAttribute("align", "start");
-    let elt3 = doc.createElementNS(XUL_NS, "description");
-    elt3.appendChild(doc.createTextNode("Test"));
-    elt3.setAttribute("style", "font-size: 150%; white-space: pre;");
-    elt2.appendChild(elt3);
-    elt3 = doc.createElementNS(XUL_NS, "description");
-    elt3.setAttribute("style", "color: #D10022;");
-    elt3.appendChild(doc.createTextNode("Breach Date"));
-    elt2.appendChild(elt3);
-    elt3 = doc.createElementNS(XUL_NS, "description");
-    elt3.appendChild(doc.createTextNode("Test Date"));
-    elt2.appendChild(elt3);
-    elt.appendChild(elt2);
+      let elt2 = doc.createElementNS(XUL_NS, "image");
+      elt2.setAttribute("flex", "0");
+      elt2.style.backgroundImage = `url(${gExtension.getURL("PwnedLogos/7k7k.png")})`;
+      elt2.className = "breachLogo";
+      elt.appendChild(elt2);
+
+      elt2 = doc.createElementNS(XUL_NS, "vbox");
+      elt2.setAttribute("align", "start");
+        let elt3 = doc.createElementNS(XUL_NS, "description");
+        elt3.appendChild(doc.createTextNode("Test"));
+        elt3.className = "headerText";
+        elt2.appendChild(elt3);
+
+        elt3 = doc.createElementNS(XUL_NS, "description");
+        elt3.className = "redText";
+        elt3.appendChild(doc.createTextNode("Breach Date"));
+        elt2.appendChild(elt3);
+
+        elt3 = doc.createElementNS(XUL_NS, "description");
+        elt3.appendChild(doc.createTextNode("Test Date"));
+        elt2.appendChild(elt3);
+      elt.appendChild(elt2);
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "description");
-    elt.setAttribute("style", "color: #D10022;");
+    elt.className = "redText";
     elt.appendChild(doc.createTextNode("Compromised Accounts"));
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "description");
     elt.appendChild(doc.createTextNode("Test Pwn Count"));
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "description");
-    elt.setAttribute("style", "color: #D10022;");
+    elt.className = "redText";
     elt.appendChild(doc.createTextNode("Compromised Data"));
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "description");
     elt.appendChild(doc.createTextNode("Test Data Classes"));
-    elt.setAttribute("style", "margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.10);");
+    elt.className = "bottomBorder";
     box.appendChild(elt);
+
     elt = doc.createElementNS(XUL_NS, "description");
-    let strings = [
+    const strings = [
       {str: "This website was reported to "},
       {str: "Firefox Monitor", link: `https://monitor.firefox.com/?breach=Adobe`},
       {str: ", a service that collects information about data breaches and other ways hackers can steal your information."},
     ];
     elt.appendChild(makeSpanWithLinks(strings, doc));
     elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
-    elt.setAttribute("style", "white-space: pre-wrap; padding-bottom: 1rem;");
+    elt.className = "specialStuff";
     box.appendChild(elt);
-    delete this.box;
+
     this.box = box;
   },
+
   primaryAction: {
     label: "Go to Firefox Monitor",
     accessKey: "f",
@@ -220,6 +231,7 @@ const panelUI = {
       panelUI.doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=Adobe`, "tab", { });
     },
   },
+
   secondaryActions: [
     {
       label: "Dismiss",

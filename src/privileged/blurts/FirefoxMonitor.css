@@ -1,0 +1,45 @@
+#fxmonitor_alert-notification .popup-notification-body {
+  font-size: 110%;
+}
+
+#fxmonitor_alert-notification .popup-notification-icon {
+  display: none;
+}
+
+#fxmonitor_alert-notification .container {
+  max-width: 1px;
+}
+
+#fxmonitor_alert-notification .bottomBorder {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+
+#fxmonitor_alert-notification .headerText {
+  font-size: 150%;
+  white-space: pre;
+}
+
+#fxmonitor_alert-notification .breachLogo {
+  width: 64px;
+  max-height: 64px;
+  margin-inline-start: 6px;
+  margin-inline-end: 5px;
+  background: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+#fxmonitor_alert-notification .redText {
+  color: #D10022;
+}
+
+#fxmonitor_alert-notification .specialStuff {
+  white-space: pre-wrap;
+  padding-bottom: 1rem;
+}
+
+#fxmonitor_alert-notification a {
+  color: #0060DF;
+}
