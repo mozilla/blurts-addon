@@ -1,5 +1,7 @@
 ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(this, "Preferences",
+                               "resource://gre/modules/Preferences.jsm");
 Cu.importGlobalProperties(["fetch"]);
 
 const gNotificationID = "fxmonitor_alert";
@@ -9,9 +11,9 @@ this.FirefoxMonitor = {
   domainMap: new Map(),
   warnedHostSet: new Set(),
   extension: null,
-  blurtsDisabled: false,
   observerAdded: false,
-  newtabURL: "about:newtab",
+  kNewtabURL: "about:newtab",
+  kDisabledPref: "browser.firefoxMonitor.disabled",
 
   init(aExtension, warnedSites) {
     this.extension = aExtension;
@@ -55,19 +57,19 @@ this.FirefoxMonitor = {
   },
 
   onLocationChange(aBrowser, aWebProgress, aRequest, aLocation) {
-    if (!aWebProgress.isTopLevel || aLocation.spec !== this.newtabURL) {
+    if (!aWebProgress.isTopLevel || aLocation.spec !== this.kNewtabURL) {
       return;
     }
-    this.warnIfNeeded(aBrowser, this.newtabURL);
+    this.warnIfNeeded(aBrowser, this.kNewtabURL);
   },
 
   startObserving() {
     const tol = (event) => {
       const browser = event.target.linkedBrowser;
-      if (browser.currentURI.spec !== this.newtabURL) {
+      if (browser.currentURI.spec !== this.kNewtabURL) {
         return;
       }
-      this.warnIfNeeded(browser, this.newtabURL);
+      this.warnIfNeeded(browser, this.kNewtabURL);
     };
 
     this.EveryWindow.registerCallback(
@@ -100,7 +102,7 @@ this.FirefoxMonitor = {
             return this.extension.getURL(aPath);
           },
           disableBlurts: () => {
-            this.blurtsDisabled = true;
+            Preferences.set(this.kDisabledPref, true);
           },
         };
 
@@ -123,6 +125,10 @@ this.FirefoxMonitor = {
     if (this.observerAdded) {
       this.EveryWindow.unregisterCallback("breach-alerts");
     }
+  },
+
+  get blurtsDisabled() {
+    return Preferences.get(this.kDisabledPref, false);
   },
 
   warnIfNeeded(browser, host) {
