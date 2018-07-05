@@ -105,19 +105,21 @@ PanelUI.prototype = {
     };
   },
 
-  secondaryActions: [
-    {
-      label: "Dismiss",
-      accessKey: "d",
-      callback: () => { },
-    }, {
-      label: "Never show breach alerts",
-      accessKey: "n",
-      callback: () => {
-        this.FirefoxMonitorUtils.disableBlurts();
+  get secondaryActions() {
+    return [
+      {
+        label: "Dismiss",
+        accessKey: "d",
+        callback: () => { },
+      }, {
+        label: "Never show breach alerts",
+        accessKey: "n",
+        callback: () => {
+          this.FirefoxMonitorUtils.disableBlurts();
+        },
       },
-    },
-  ],
+    ];
+  },
 
   refresh(site) {
     this.site = site;
@@ -127,19 +129,21 @@ PanelUI.prototype = {
     this.logoElt.style.backgroundImage = `url(${this.FirefoxMonitorUtils.getURL(`PwnedLogos/${site.logoSrc}`)}`;
 
     function clearChildren(elt) {
-      while (elt.firstChild) elt.firstChild.remove();
+      while (elt.firstChild) {
+        elt.firstChild.remove();
+      }
     }
 
-    clearChildren(this.breachNameElt);
+    for (const elt of [this.breachNameElt, this.breachDateElt, this.pwnCountElt, this.breachDataElt]) {
+      clearChildren(elt);
+    }
+
     this.breachNameElt.appendChild(doc.createTextNode(site.Name));
 
-    clearChildren(this.breachDateElt);
     this.breachDateElt.appendChild(doc.createTextNode(site.BreachDate));
 
-    clearChildren(this.pwnCountElt);
     this.pwnCountElt.appendChild(doc.createTextNode(site.PwnCount.toLocaleString()));
 
-    clearChildren(this.breachDataElt);
     this.breachDataElt.appendChild(doc.createTextNode(site.DataClasses));
 
     this.monitorLink.setAttribute("href", `https://monitor.firefox.com/?breach=${site.Name}`);
