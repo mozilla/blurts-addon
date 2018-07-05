@@ -9,6 +9,8 @@ let gExtension;
 this.FirefoxMonitor = {
   init(aExtension, aVariation, warnedSites, firstRunTimestamp) {
     gExtension = aExtension;
+    ChromeUtils.defineModuleGetter(this, "EveryWindow",
+                                   gExtension.getURL("privileged/blurts/EveryWindow.jsm"));
 
     if (warnedSites) {
       warnedHostSet = new Set(warnedSites);
@@ -103,7 +105,7 @@ function startObserving() {
     warnIfNeeded(browser, newtabURL);
   }
 
-  EveryWindow.registerCallback(
+  FirefoxMonitor.EveryWindow.registerCallback(
     "breach-alerts",
     (win) => {
       win.gBrowser.addTabsProgressListener(tpl);
@@ -122,7 +124,7 @@ function startObserving() {
 
 function stopObserving() {
   if (observerAdded) {
-    EveryWindow.unregisterCallback("breach-alerts");
+    FirefoxMonitor.EveryWindow.unregisterCallback("breach-alerts");
   }
 }
 
@@ -291,62 +293,5 @@ let UIFactory = [
     return retval;
   },
 ];
-
-let EveryWindow = {
-  _callbacks: new Map(),
-  _initialized: false,
-
-  registerCallback: function EW_registerCallback(id, init, uninit) {
-    if (this._callbacks.has(id)) {
-      return;
-    }
-
-    this._callForEveryWindow(init);
-    this._callbacks.set(id, {id, init, uninit});
-
-    if (!this._initialized) {
-      Services.obs.addObserver(this._onOpenWindow.bind(this),
-                               "browser-delayed-startup-finished");
-      this._initialized = true;
-    }
-  },
-
-  unregisterCallback: function EW_unregisterCallback(aId, aCallUninit = true) {
-    if (!this._callbacks.has(aId)) {
-      return;
-    }
-
-    if (aCallUninit) {
-      this._callForEveryWindow(this._callbacks.get(aId).uninit);
-    }
-
-    this._callbacks.delete(aId);
-  },
-
-  _callForEveryWindow(aFunction) {
-    let windowList = Services.wm.getEnumerator("navigator:browser");
-    while (windowList.hasMoreElements()) {
-      let win = windowList.getNext();
-      win.delayedStartupPromise.then(() => { aFunction(win); });
-    }
-  },
-
-  _onOpenWindow(aWindow) {
-    for (let c of this._callbacks.values()) {
-      c.init(aWindow);
-    }
-
-    aWindow.addEventListener("unload",
-                             this._onWindowClosing.bind(this),
-                             { once: true });
-  },
-
-  _onWindowClosing(aEvent) {
-    let win = aEvent.target;
-    for (let c of this._callbacks.values()) {
-      c.uninit(win);
-    }
-  },
-};
 
 const EXPORTED_SYMBOLS = ["FirefoxMonitor"];
