@@ -12,6 +12,7 @@
       "strict_min_version": "61.0"
     }
   },
+  "homepage_url": "https://monitor.firefox.com",
 
   "permissions": ["storage", "management"],
 
