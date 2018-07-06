@@ -1,6 +1,3 @@
-ChromeUtils.defineModuleGetter(this, "Services",
-                               "resource://gre/modules/Services.jsm");
-
 this.EveryWindow = {
   _callbacks: new Map(),
   _initialized: false,
@@ -57,5 +54,3 @@ this.EveryWindow = {
     }
   },
 };
-
-const EXPORTED_SYMBOLS = ["EveryWindow"];

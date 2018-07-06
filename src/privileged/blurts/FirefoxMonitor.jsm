@@ -1,12 +1,3 @@
-ChromeUtils.defineModuleGetter(this, "Services",
-                               "resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "Preferences",
-                               "resource://gre/modules/Preferences.jsm");
-Cu.importGlobalProperties(["fetch"]);
-
-const gNotificationID = "fxmonitor_alert";
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-
 this.FirefoxMonitor = {
   domainMap: new Map(),
   warnedHostSet: new Set(),
@@ -17,16 +8,18 @@ this.FirefoxMonitor = {
 
   init(aExtension, warnedSites) {
     this.extension = aExtension;
-    ChromeUtils.defineModuleGetter(this, "EveryWindow",
-                                   this.extension.getURL("privileged/blurts/EveryWindow.jsm"));
-    ChromeUtils.defineModuleGetter(this, "PanelUI",
-                                   this.extension.getURL("privileged/blurts/PanelUI.jsm"));
+    Services.scriptloader.loadSubScript(
+      this.getURL("privileged/blurts/subscripts/Globals.jsm"));
+    Services.scriptloader.loadSubScript(
+      this.getURL("privileged/blurts/subscripts/EveryWindow.jsm"));
+    Services.scriptloader.loadSubScript(
+      this.getURL("privileged/blurts/subscripts/PanelUI.jsm"));
 
     if (warnedSites) {
       this.warnedHostSet = new Set(warnedSites);
     }
 
-    fetch(this.extension.getURL("breaches.json")).then((response) => {
+    fetch(this.getURL("breaches.json")).then((response) => {
       return response.json();
     }).then((sites) => {
       for (let site of sites) {
@@ -72,14 +65,14 @@ this.FirefoxMonitor = {
       this.warnIfNeeded(browser, this.kNewtabURL);
     };
 
-    this.EveryWindow.registerCallback(
+    EveryWindow.registerCallback(
       "breach-alerts",
       (win) => {
         // Inject our stylesheet.
         const DOMWindowUtils =
           win.QueryInterface(Ci.nsIInterfaceRequestor)
              .getInterface(Ci.nsIDOMWindowUtils);
-        DOMWindowUtils.loadSheetUsingURIString(this.extension.getURL("privileged/blurts/FirefoxMonitor.css"),
+        DOMWindowUtils.loadSheetUsingURIString(this.getURL("privileged/blurts/FirefoxMonitor.css"),
                                                DOMWindowUtils.AUTHOR_SHEET);
 
         // Setup the popup notification.
@@ -88,21 +81,19 @@ this.FirefoxMonitor = {
         let pn = doc.createElementNS(XUL_NS, "popupnotification");
         let pnContent = doc.createElementNS(XUL_NS, "popupnotificationcontent");
 
-        let panelUI = new FirefoxMonitor.PanelUI(doc);
+        let panelUI = new PanelUI(doc);
         pnContent.appendChild(panelUI.box);
         pn.appendChild(pnContent);
         pn.setAttribute("id", `${gNotificationID}-notification`);
         pn.setAttribute("hidden", "true");
         parentElt.appendChild(pn);
         win.FirefoxMonitorPanelUI = panelUI;
-
-        // Add some utils to the window for other code to use.
         win.FirefoxMonitorUtils = {
           getURL: (aPath) => {
-            return this.extension.getURL(aPath);
+            return this.getURL(aPath);
           },
           disableBlurts: () => {
-            Preferences.set(this.kDisabledPref, true);
+            this.disableBlurts();
           },
         };
 
@@ -123,12 +114,20 @@ this.FirefoxMonitor = {
 
   stopObserving() {
     if (this.observerAdded) {
-      this.EveryWindow.unregisterCallback("breach-alerts");
+      EveryWindow.unregisterCallback("breach-alerts");
     }
   },
 
   get blurtsDisabled() {
     return Preferences.get(this.kDisabledPref, false);
+  },
+
+  disableBlurts() {
+    Preferences.set(this.kDisabledPref, true);
+  },
+
+  getURL(aPath) {
+    return this.extension.getURL(aPath);
   },
 
   warnIfNeeded(browser, host) {
@@ -158,5 +157,3 @@ this.FirefoxMonitor = {
       {persistent: true, hideClose: true, eventCallback: populatePanel});
   },
 };
-
-const EXPORTED_SYMBOLS = ["FirefoxMonitor"];

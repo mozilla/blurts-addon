@@ -1,8 +1,11 @@
+ChromeUtils.defineModuleGetter(this, "Services",
+                               "resource://gre/modules/Services.jsm");
+
 this.blurts = class extends ExtensionAPI {
   getAPI(context) {
-    let FirefoxMonitorContainer = {};
-    ChromeUtils.defineModuleGetter(FirefoxMonitorContainer, "FirefoxMonitor",
-                                   context.extension.getURL("privileged/blurts/FirefoxMonitor.jsm"));
+    const FirefoxMonitorContainer = {};
+    Services.scriptloader.loadSubScript(context.extension.getURL("privileged/blurts/FirefoxMonitor.jsm"),
+                                        FirefoxMonitorContainer);
     return {
       blurts: {
         async start() {

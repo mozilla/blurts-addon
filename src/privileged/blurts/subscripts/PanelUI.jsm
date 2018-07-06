@@ -1,6 +1,3 @@
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-const HTML_NS = "http://www.w3.org/1999/xhtml";
-
 function PanelUI(doc) {
   this.doc = doc;
   const box = doc.createElementNS(XUL_NS, "vbox");
@@ -149,5 +146,3 @@ PanelUI.prototype = {
     this.monitorLink.setAttribute("href", `https://monitor.firefox.com/?breach=${site.Name}`);
   },
 };
-
-const EXPORTED_SYMBOLS = ["PanelUI"];
