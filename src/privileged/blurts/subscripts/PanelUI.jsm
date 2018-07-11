@@ -2,13 +2,14 @@ class PanelUI {
   constructor(doc) {
     this.site = null;
     this.doc = doc;
+
     const box = doc.createElementNS(XUL_NS, "vbox");
     box.className = "container";
 
     let elt, elt2, elt3;
 
     elt = doc.createElementNS(XUL_NS, "description");
-    elt.appendChild(doc.createTextNode("Have an account? It may be at risk."));
+    elt.appendChild(doc.createTextNode(this.getString("monitor.popupHeader")));
     elt.classList.add("headerText", "bottomBorder");
     box.appendChild(elt);
 
@@ -28,7 +29,7 @@ class PanelUI {
 
         elt3 = doc.createElementNS(XUL_NS, "description");
         elt3.className = "redText";
-        elt3.appendChild(doc.createTextNode("Breach Date"));
+        elt3.appendChild(doc.createTextNode(this.getString("monitor.breachDateHeader")));
         elt2.appendChild(elt3);
 
         elt3 = doc.createElementNS(XUL_NS, "description");
@@ -39,7 +40,7 @@ class PanelUI {
 
     elt = doc.createElementNS(XUL_NS, "description");
     elt.className = "redText";
-    elt.appendChild(doc.createTextNode("Compromised Accounts"));
+    elt.appendChild(doc.createTextNode(this.getString("monitor.pwnCountHeader")));
     box.appendChild(elt);
 
     elt = doc.createElementNS(XUL_NS, "description");
@@ -48,7 +49,7 @@ class PanelUI {
 
     elt = doc.createElementNS(XUL_NS, "description");
     elt.className = "redText";
-    elt.appendChild(doc.createTextNode("Compromised Data"));
+    elt.appendChild(doc.createTextNode(this.getString("monitor.dataClassesHeader")));
     box.appendChild(elt);
 
     elt = doc.createElementNS(XUL_NS, "description");
@@ -58,20 +59,19 @@ class PanelUI {
 
     elt = doc.createElementNS(XUL_NS, "description");
     elt2 = doc.createElementNS(HTML_NS, "span");
-      elt2.appendChild(doc.createTextNode("This website was reported to "));
+      elt2.appendChild(doc.createTextNode(`${this.getString("monitor.siteReportedTo")} `));
 
       elt3 = doc.createElementNS(HTML_NS, "a");
         elt3.addEventListener("click", (event) => {
           event.preventDefault();
           doc.defaultView.openTrustedLinkIn(`https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", {});
         });
-        elt3.appendChild(doc.createTextNode("Firefox Monitor"));
+        elt3.appendChild(doc.createTextNode(this.getString("monitor.FirefoxMonitor")));
         this.monitorLink = elt3;
       elt2.appendChild(elt3);
 
-      elt2.appendChild(doc.createTextNode(", a service that collects information about data breaches and other ways hackers can steal your information."));
+      elt2.appendChild(doc.createTextNode(this.getString("monitor.end")));
     elt.appendChild(elt2);
-    elt.appendChild(doc.createTextNode("This website was reported to Firefox Monitor, a service that collects information about data breaches and other ways hackers can steal your information."));
     elt.className = "specialStuff";
     box.appendChild(elt);
 
@@ -80,6 +80,14 @@ class PanelUI {
 
   get FirefoxMonitorUtils() {
     return this.doc.defaultView.FirefoxMonitorUtils;
+  }
+
+  getString(aKey) {
+    return this.FirefoxMonitorUtils.getString(aKey);
+  }
+
+  getFormattedString(aKey, args) {
+    return this.FirefoxMonitorUtils.getFormattedString(aKey, args);
   }
 
   get primaryAction() {

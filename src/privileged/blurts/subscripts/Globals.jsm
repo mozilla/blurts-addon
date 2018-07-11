@@ -1,6 +1,6 @@
 ChromeUtils.defineModuleGetter(this, "Preferences",
                                "resource://gre/modules/Preferences.jsm");
-Cu.importGlobalProperties(["fetch"]);
+Cu.importGlobalProperties(["fetch", "btoa"]);
 
 const gNotificationID = "fxmonitor_alert";
 

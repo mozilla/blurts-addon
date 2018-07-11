@@ -5,6 +5,7 @@ this.FirefoxMonitor = {
   observerAdded: false,
   kNewtabURL: "about:newtab",
   kDisabledPref: "browser.firefoxMonitor.disabled",
+  strings: null,
 
   init(aExtension, warnedSites) {
     this.extension = aExtension;
@@ -19,17 +20,29 @@ this.FirefoxMonitor = {
       this.warnedHostSet = new Set(warnedSites);
     }
 
-    fetch(this.getURL("breaches.json")).then((response) => {
-      return response.json();
-    }).then((sites) => {
-      for (let site of sites) {
-        this.domainMap.set(site.Domain.toLowerCase(), { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses.join(", "), logoSrc: `${site.Name}.${site.LogoType}` });
+    fetch(this.getURL("locales/en_US/strings.properties")).then((response) => {
+      return response.arrayBuffer();
+    }).then((buffer) => {
+      let binary = "";
+      let bytes = new Uint8Array( buffer );
+      let len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[i] );
       }
-      this.startObserving();
-      aExtension.callOnClose({
-        close: () => {
-          this.stopObserving();
-        },
+      const b64 = btoa(binary);
+      this.strings = Services.strings.createBundle(`data:text/plain;base64,${b64}`);
+      fetch(this.getURL("breaches.json")).then((response) => {
+        return response.json();
+      }).then((sites) => {
+        for (let site of sites) {
+          this.domainMap.set(site.Domain.toLowerCase(), { Domain: site.Domain, Name: site.Name, Title: site.Title, PwnCount: site.PwnCount, BreachDate: site.BreachDate, DataClasses: site.DataClasses.join(", "), logoSrc: `${site.Name}.${site.LogoType}` });
+        }
+        this.startObserving();
+        aExtension.callOnClose({
+          close: () => {
+            this.stopObserving();
+          },
+        });
       });
     });
   },
@@ -81,13 +94,6 @@ this.FirefoxMonitor = {
         let pn = doc.createElementNS(XUL_NS, "popupnotification");
         let pnContent = doc.createElementNS(XUL_NS, "popupnotificationcontent");
 
-        let panelUI = new PanelUI(doc);
-        pnContent.appendChild(panelUI.box);
-        pn.appendChild(pnContent);
-        pn.setAttribute("id", `${gNotificationID}-notification`);
-        pn.setAttribute("hidden", "true");
-        parentElt.appendChild(pn);
-        win.FirefoxMonitorPanelUI = panelUI;
         win.FirefoxMonitorUtils = {
           getURL: (aPath) => {
             return this.getURL(aPath);
@@ -95,7 +101,21 @@ this.FirefoxMonitor = {
           disableBlurts: () => {
             this.disableBlurts();
           },
+          getString: (aKey) => {
+            return this.getString(aKey);
+          },
+          getFormattedString: (aKey, args) => {
+            return this.getFormattedString(aKey, args);
+          },
         };
+
+        let panelUI = new PanelUI(doc);
+        pnContent.appendChild(panelUI.box);
+        pn.appendChild(pnContent);
+        pn.setAttribute("id", `${gNotificationID}-notification`);
+        pn.setAttribute("hidden", "true");
+        parentElt.appendChild(pn);
+        win.FirefoxMonitorPanelUI = panelUI;
 
         // Start listening!
         win.gBrowser.addTabsProgressListener(this);
@@ -128,6 +148,14 @@ this.FirefoxMonitor = {
 
   getURL(aPath) {
     return this.extension.getURL(aPath);
+  },
+
+  getString(aKey) {
+    return this.strings.GetStringFromName(aKey);
+  },
+
+  getFormattedString(aKey, args) {
+    return this.strings.formatStringFromName(aKey, args, args.length);
   },
 
   warnIfNeeded(browser, host) {
