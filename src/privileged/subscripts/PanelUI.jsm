@@ -44,8 +44,8 @@ PanelUI.prototype = {
   get primaryAction() {
     delete this.primaryAction;
     return this.primaryAction = {
-      label: "Check Firefox Monitor",
-      accessKey: "f",
+      label: this.getFormattedString("fxmonitor.checkButton.label", [this.brandString]),
+      accessKey: this.getString("fxmonitor.checkButton.accessKey"),
       callback: () => {
         this.doc.defaultView.openTrustedLinkIn(
           `https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", { });
