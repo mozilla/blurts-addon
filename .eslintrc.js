@@ -56,7 +56,7 @@ module.exports = {
     "no-shadow": "error",
     "no-unused-vars": "error",
     "no-var": "error",
-    "prefer-const": "warn",
+    "prefer-const": "off",
     "prefer-spread": "error",
     "semi": ["error", "always"],
     "valid-jsdoc": "warn",
