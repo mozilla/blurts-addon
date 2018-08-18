@@ -1,0 +1,28 @@
+#fxmonitor-notification .popup-notification-body {
+  font-size: 110%;
+}
+
+#fxmonitor-notification popupnotificationcontent {
+  margin-top: 0;
+}
+
+#fxmonitor-notification .popup-notification-body > hbox:first-child {
+  display: none;
+}
+
+#fxmonitor-notification .popup-notification-icon,
+.fxmonitor-icon {
+  list-style-image: url("chrome://browser/skin/warning.svg");
+  fill: rgba(12, 12, 13, 0.6); /* Gray 90 a60 */
+  stroke: transparent;
+  -moz-context-properties: fill, stroke;
+}
+
+#fxmonitor-notification .popupText {
+  max-width: 300px;
+}
+
+#fxmonitor-notification .headerText {
+  font-weight: 600;
+  white-space: pre;
+}

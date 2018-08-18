@@ -1,27 +1,23 @@
 {
   "manifest_version": 2,
   "name": "Firefox Monitor",
-  "version": "2.0",
-  "description": "Have your accounts been leaked or stolen in a data breach? Find out with Firefox Monitor, an experimental service created by Mozilla.\n\nMozilla is running this study to evaluate a service that alerts users to potential data breaches. Users in the study will receive a notification when they land on a website that has been affected by a data breach or when they open a new tab in Firefox. Users can then search the Firefox Monitor database to see if their account information was compromised. The information about compromised data comes from our partner in this project, haveibeenpwned.com.\n\nYour email address\nThe Firefox Monitor search tool requires that you enter your email address. Mozilla does not send your email address to any third parties and does not store your email.\n\n\nHow you can disable this study\nIf you don’t want to participate in this study, you can select the Disable button on this page. To disable all studies, you can update your Privacy and Security settings in about:preferences.",
+  "version": "2.1",
+  "applications": {
+    "gecko": {
+      "id": "fxmonitor@mozilla.org",
+      "strict_min_version": "62.0"
+    }
+  },
   "background": {
     "scripts": ["background.js"]
   },
-  "applications": {
-    "gecko": {
-      "id": "fxmonitor@shield.mozilla.org",
-      "strict_min_version": "61.0"
-    }
-  },
-
-  "permissions": [],
-
   "experiment_apis": {
-    "blurts": {
-      "schema": "./privileged/blurts/schema.json",
+    "fxmonitor": {
+      "schema": "./privileged/schema.json",
       "parent": {
         "scopes": ["addon_parent"],
-        "script": "./privileged/blurts/api.js",
-        "paths": [["blurts"]]
+        "script": "./privileged/api.js",
+        "paths": [["fxmonitor"]]
       }
     }
   }
