@@ -3,22 +3,30 @@
 this.FirefoxMonitor = {
   // Map of breached site host -> breach metadata.
   domainMap: new Map(),
+
   // Set of hosts for which the user has already been shown,
   // and interacted with, the popup.
   warnedHostsSet: new Set(),
+
   // The above set is persisted as a JSON string in this pref.
   kWarnedHostsPref: "extensions.fxmonitor.warnedHosts",
+
   // Reference to the extension object from the WebExtension context.
   // Used for getting URIs for resources packaged in the extension.
   extension: null,
+
   // Whether we've started observing for the user visiting a breached site.
   observerAdded: false,
+
   // loadStrings loads a stringbundle into this property.
   strings: null,
-  kEnabledPref: "extensions.fxmonitor.enabled",
+
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in init().
   enabled: null,
+
+  kEnabledPref: "extensions.fxmonitor.enabled",
+
   kNotificationID: "fxmonitor",
 
   disable() {
@@ -39,12 +47,15 @@ this.FirefoxMonitor = {
 
   async init(aExtension) {
     this.extension = aExtension;
+
     /* globals Preferences, fetch, btoa, gNotificationID, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
+
     /* globals EveryWindow */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/EveryWindow.jsm"));
+
     /* globals PanelUI */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/PanelUI.jsm"));
