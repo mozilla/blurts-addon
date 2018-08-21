@@ -18,6 +18,63 @@
   -moz-context-properties: fill, stroke;
 }
 
+#fxmonitor-notification-anchor,
+.fxmonitor-icon {
+  animation-timing-function: linear;
+  animation-duration: 0.66s;
+}
+
+#fxmonitor-notification-anchor {
+  animation-name: fxmonitor-anchor-animation;
+}
+
+#fxmonitor-notification-anchor:-moz-locale-dir(rtl) {
+  animation-name: fxmonitor-anchor-animation-rtl;
+}
+
+.fxmonitor-icon {
+  animation-name: fxmonitor-icon-animation;
+}
+
+/* Animate the appearance of the anchor icon: push the other icons to the right. */
+@keyframes fxmonitor-anchor-animation {
+  from {
+    margin-right: -20px;
+  }
+  50% {
+    margin-right: 0;
+  }
+  to {
+  }
+}
+
+/* For RTL locales, push the other icons to the left. */
+@keyframes fxmonitor-anchor-animation-rtl {
+  from {
+    margin-left: -20px;
+  }
+  50% {
+    margin-left: 0;
+  }
+  to {
+  }
+}
+
+/* After the appearance of the anchor box, expand the icon into view */
+@keyframes fxmonitor-icon-animation {
+  from {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(0);
+  }
+  75% {
+    transform: scale(1.2);
+  }
+  to {
+  }
+}
+
 #fxmonitor-notification .popupText {
   max-width: 300px;
 }

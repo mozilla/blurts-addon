@@ -118,22 +118,14 @@ this.FirefoxMonitor = {
     this.strings = Services.strings.createBundle(`data:text/plain;base64,${b64}`);
   },
 
-  _lastBreachRefresh: null,
   async loadBreaches() {
-    let one_hour = 60 * 60 * 1000;
-    let now = Date.now();
-
-    if (this._lastBreachRefresh &&
-        (now - this._lastBreachRefresh) < one_hour) {
-      return;
-    }
-
-    // TODO: investigate if/how this impacts startup perf.
     // TODO: check first if the list of breaches was updated
     //       since we last checked, before downloading it.
     //       (pending repsonse from Troy about how to do this)
     let response = await fetch("https://haveibeenpwned.com/api/v2/breaches");
     let sites = await response.json();
+
+    this.domainMap.clear();
     sites.forEach(site => {
       this.domainMap.set(site.Domain, {
         Name: site.Name,
@@ -142,7 +134,8 @@ this.FirefoxMonitor = {
       });
     });
 
-    this._lastBreachRefresh = now;
+    let one_hour = 60 * 60 * 1000;
+    setTimeout(() => this.loadBreaches(), one_hour);
   },
 
   // nsIWebProgressListener implementation.
@@ -164,7 +157,6 @@ this.FirefoxMonitor = {
     }
 
     this.warnIfNeeded(aBrowser, host);
-    this.loadBreaches();
   },
 
   startObserving() {
@@ -192,10 +184,9 @@ this.FirefoxMonitor = {
         DOMWindowUtils.loadSheetUsingURIString(this.getURL("privileged/FirefoxMonitor.css"),
                                                DOMWindowUtils.AUTHOR_SHEET);
 
+        // Set up some helper functions on the window object
+        // for the popup notification to use.
         win.FirefoxMonitorUtils = {
-          getURL: (aPath) => {
-            return this.getURL(aPath);
-          },
           disable: () => {
             this.disable();
           },
@@ -210,11 +201,18 @@ this.FirefoxMonitor = {
         // Setup the popup notification stuff. First, the URL bar icon:
         let doc = win.document;
         let box = doc.getElementById("notification-popup-box");
+        // We create a box to use as the anchor, and put an icon image
+        // inside it. This way, when we animate the icon, its scale change
+        // does not cause the popup notification to bounce due to the anchor
+        // point moving.
+        let box2 = doc.createElementNS(XUL_NS, "box");
+        box2.setAttribute("id", `${this.kNotificationID}-notification-anchor`);
+        box2.classList.add("notification-anchor-icon");
         let img = doc.createElementNS(XUL_NS, "image");
-        img.setAttribute("id", `${this.kNotificationID}-notification-icon`);
-        img.classList.add("notification-anchor-icon", `${this.kNotificationID}-icon`);
         img.setAttribute("role", "button");
-        box.appendChild(img);
+        img.classList.add(`${this.kNotificationID}-icon`);
+        box2.appendChild(img);
+        box.appendChild(box2);
         // TODO: Add a tooltip to the image once content is provided by UX.
 
         // Now, the popupnotificationcontent:
@@ -277,7 +275,7 @@ this.FirefoxMonitor = {
 
     doc.defaultView.PopupNotifications.show(
       browser, this.kNotificationID, "",
-      `${this.kNotificationID}-notification-icon`, panelUI.primaryAction, panelUI.secondaryActions,
+      `${this.kNotificationID}-notification-anchor`, panelUI.primaryAction, panelUI.secondaryActions,
       {persistent: true, hideClose: true, eventCallback: populatePanel});
   },
 };
