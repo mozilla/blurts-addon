@@ -263,10 +263,6 @@ this.FirefoxMonitor = {
         doc.getElementById(`${this.kNotificationID}-notification`).remove();
         delete win.FirefoxMonitorPanelUI;
 
-        if (this._loadBreachesTimer) {
-          clearTimeout(this._loadBreachesTimer);
-        }
-
         win.gBrowser.removeTabsProgressListener(this);
       },
     );
@@ -278,7 +274,13 @@ this.FirefoxMonitor = {
     if (!this.observerAdded) {
       return;
     }
+
     EveryWindow.unregisterCallback(this.kNotificationID);
+
+    if (this._loadBreachesTimer) {
+      clearTimeout(this._loadBreachesTimer);
+    }
+
     this.observerAdded = false;
   },
 
