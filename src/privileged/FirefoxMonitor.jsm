@@ -71,7 +71,7 @@ this.FirefoxMonitor = {
   },
 
   async delayedInit() {
-    /* globals Preferences, fetch, btoa, gNotificationID, XUL_NS */
+    /* globals AddonManager, Preferences, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
 
@@ -96,7 +96,16 @@ this.FirefoxMonitor = {
 
     await this.loadStrings();
     await this.loadBreaches();
+
+    AddonManager.addAddonListener(this);
+
     this._delayedInited = true;
+  },
+
+  onUninstalled(aAddon) {
+    if (aAddon.id === this.extension.id) {
+      this.stopObserving();
+    }
   },
 
   async loadStrings() {
@@ -118,6 +127,7 @@ this.FirefoxMonitor = {
     this.strings = Services.strings.createBundle(`data:text/plain;base64,${b64}`);
   },
 
+  _loadBreachesTimer: null,
   async loadBreaches() {
     // TODO: check first if the list of breaches was updated
     //       since we last checked, before downloading it.
@@ -134,8 +144,9 @@ this.FirefoxMonitor = {
       });
     });
 
+    // Refresh every hour.
     let one_hour = 60 * 60 * 1000;
-    setTimeout(() => this.loadBreaches(), one_hour);
+    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), one_hour);
   },
 
   // nsIWebProgressListener implementation.
@@ -167,13 +178,6 @@ this.FirefoxMonitor = {
     EveryWindow.registerCallback(
       this.kNotificationID,
       (win) => {
-        if (win.FirefoxMonitorUtils) {
-          // We've already set this window up once, just add the listener
-          // and we're good to go.
-          win.gBrowser.addTabsProgressListener(this);
-          return;
-        }
-
         // Inject our stylesheet.
         let DOMWindowUtils = win.windowUtils;
         if (!DOMWindowUtils) {
@@ -187,6 +191,10 @@ this.FirefoxMonitor = {
         // Set up some helper functions on the window object
         // for the popup notification to use.
         win.FirefoxMonitorUtils = {
+          // Keeps track of all notifications currently shown,
+          // so that we can clear them out properly if we get
+          // disabled.
+          notifications: new Set(),
           disable: () => {
             this.disable();
           },
@@ -235,6 +243,30 @@ this.FirefoxMonitor = {
         if (!win.gBrowser) {
           return;
         }
+
+        let DOMWindowUtils = win.windowUtils;
+        if (!DOMWindowUtils) {
+          // win.windowUtils was added in 63, fallback if it's not available.
+          DOMWindowUtils = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                              .getInterface(Ci.nsIDOMWindowUtils);
+        }
+        DOMWindowUtils.removeSheetUsingURIString(this.getURL("privileged/FirefoxMonitor.css"),
+                                                 DOMWindowUtils.AUTHOR_SHEET);
+
+        win.FirefoxMonitorUtils.notifications.forEach(n => {
+          n.remove();
+        });
+        delete win.FirefoxMonitorUtils;
+
+        let doc = win.document;
+        doc.getElementById(`${this.kNotificationID}-notification-anchor`).remove();
+        doc.getElementById(`${this.kNotificationID}-notification`).remove();
+        delete win.FirefoxMonitorPanelUI;
+
+        if (this._loadBreachesTimer) {
+          clearTimeout(this._loadBreachesTimer);
+        }
+
         win.gBrowser.removeTabsProgressListener(this);
       },
     );
@@ -246,7 +278,6 @@ this.FirefoxMonitor = {
     if (!this.observerAdded) {
       return;
     }
-
     EveryWindow.unregisterCallback(this.kNotificationID);
     this.observerAdded = false;
   },
@@ -264,18 +295,26 @@ this.FirefoxMonitor = {
     Preferences.set(this.kWarnedHostsPref, JSON.stringify([...this.warnedHostsSet]));
 
     let doc = browser.ownerDocument;
+    let win = doc.defaultView;
     let panelUI = doc.defaultView.FirefoxMonitorPanelUI;
 
     let populatePanel = (event) => {
-      if (event !== "showing") {
-        return;
+      switch (event) {
+        case "showing":
+          panelUI.refresh(this.domainMap.get(host));
+          break;
+        case "removed":
+          win.FirefoxMonitorUtils.notifications.delete(
+            win.PopupNotifications.getNotification(this.kNotificationID, browser));
+          break;
       }
-      panelUI.refresh(this.domainMap.get(host));
     };
 
-    doc.defaultView.PopupNotifications.show(
+    let n = win.PopupNotifications.show(
       browser, this.kNotificationID, "",
       `${this.kNotificationID}-notification-anchor`, panelUI.primaryAction, panelUI.secondaryActions,
       {persistent: true, hideClose: true, eventCallback: populatePanel});
+
+    win.FirefoxMonitorUtils.notifications.add(n);
   },
 };

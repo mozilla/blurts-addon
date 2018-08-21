@@ -37,13 +37,17 @@ PanelUI.prototype = {
   },
 
   get brandString() {
-    delete this.brandString;
-    return this.brandString = this.getString("fxmonitor.FirefoxMonitor");
+    if (this._brandString) {
+      return this._brandString;
+    }
+    return this._brandString = this.getString("fxmonitor.FirefoxMonitor");
   },
 
   get primaryAction() {
-    delete this.primaryAction;
-    return this.primaryAction = {
+    if (this._primaryAction) {
+      return this._primaryAction;
+    }
+    return this._primaryAction = {
       label: this.getFormattedString("fxmonitor.checkButton.label", [this.brandString]),
       accessKey: this.getString("fxmonitor.checkButton.accessKey"),
       callback: () => {
@@ -54,8 +58,10 @@ PanelUI.prototype = {
   },
 
   get secondaryActions() {
-    delete this.secondaryActions;
-    return this.secondaryActions = [
+    if (this._secondaryActions) {
+      return this._secondaryActions;
+    }
+    return this._secondaryActions = [
       {
         label: this.getString("fxmonitor.dismissButton.label"),
         accessKey: this.getString("fxmonitor.dismissButton.accessKey"),
