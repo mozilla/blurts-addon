@@ -48,6 +48,29 @@ this.FirefoxMonitor = {
   async init(aExtension) {
     this.extension = aExtension;
 
+    XPCOMUtils.defineLazyPreferenceGetter(
+      this, "enabled", this.kEnabledPref, false,
+      async (pref, oldVal, newVal) => {
+        if (newVal) {
+          if (!this._delayedInited) {
+            await this.delayedInit();
+          }
+          this.startObserving();
+        } else {
+          this.stopObserving();
+        }
+      }
+    );
+
+    if (!this.enabled) {
+      return;
+    }
+
+    await this.delayedInit();
+    this.startObserving();
+  },
+
+  async delayedInit() {
     /* globals Preferences, fetch, btoa, gNotificationID, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
@@ -59,17 +82,6 @@ this.FirefoxMonitor = {
     /* globals PanelUI */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/PanelUI.jsm"));
-
-    XPCOMUtils.defineLazyPreferenceGetter(
-      this, "enabled", this.kEnabledPref, false,
-      (pref, oldVal, newVal) => {
-        if (newVal) {
-          this.startObserving();
-        } else {
-          this.stopObserving();
-        }
-      }
-    );
 
     let warnedHostsJSON = Preferences.get(this.kWarnedHostsPref, "");
     if (warnedHostsJSON) {
@@ -84,10 +96,7 @@ this.FirefoxMonitor = {
 
     await this.loadStrings();
     await this.loadBreaches();
-
-    if (this.enabled) {
-      this.startObserving();
-    }
+    this._delayedInited = true;
   },
 
   async loadStrings() {
