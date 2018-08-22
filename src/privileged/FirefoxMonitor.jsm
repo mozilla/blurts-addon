@@ -83,6 +83,34 @@ this.FirefoxMonitor = {
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/PanelUI.jsm"));
 
+    Services.telemetry.registerScalars("fxmonitor", {
+      "doorhanger_shown": {
+        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
+        keyed: false,
+        record_on_release: true,
+      },
+      "doorhanger_removed": {
+        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
+        keyed: false,
+        record_on_release: true,
+      },
+      "check_btn_clicked": {
+        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
+        keyed: false,
+        record_on_release: true,
+      },
+      "dismiss_btn_clicked": {
+        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
+        keyed: false,
+        record_on_release: true,
+      },
+      "never_show_btn_clicked": {
+        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
+        keyed: false,
+        record_on_release: true,
+      },
+    });
+
     let warnedHostsJSON = Preferences.get(this.kWarnedHostsPref, "");
     if (warnedHostsJSON) {
       try {
@@ -308,6 +336,7 @@ this.FirefoxMonitor = {
         case "removed":
           win.FirefoxMonitorUtils.notifications.delete(
             win.PopupNotifications.getNotification(this.kNotificationID, browser));
+          Services.telemetry.scalarAdd("fxmonitor.doorhanger_removed", 1);
           break;
       }
     };
@@ -316,6 +345,8 @@ this.FirefoxMonitor = {
       browser, this.kNotificationID, "",
       `${this.kNotificationID}-notification-anchor`, panelUI.primaryAction, panelUI.secondaryActions,
       {persistent: true, hideClose: true, eventCallback: populatePanel});
+
+    Services.telemetry.scalarAdd("fxmonitor.doorhanger_shown", 1);
 
     win.FirefoxMonitorUtils.notifications.add(n);
   },

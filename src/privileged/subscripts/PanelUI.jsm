@@ -53,6 +53,8 @@ PanelUI.prototype = {
       callback: () => {
         this.doc.defaultView.openTrustedLinkIn(
           `https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", { });
+
+        Services.telemetry.scalarAdd("fxmonitor.check_btn_clicked", 1);
       },
     };
   },
@@ -65,12 +67,15 @@ PanelUI.prototype = {
       {
         label: this.getString("fxmonitor.dismissButton.label"),
         accessKey: this.getString("fxmonitor.dismissButton.accessKey"),
-        callback: () => { },
+        callback: () => {
+          Services.telemetry.scalarAdd("fxmonitor.dismiss_btn_clicked", 1);
+        },
       }, {
         label: this.getFormattedString("fxmonitor.neverShowButton.label", [this.brandString]),
         accessKey: this.getString("fxmonitor.neverShowButton.accessKey"),
         callback: () => {
           this.FirefoxMonitorUtils.disable();
+          Services.telemetry.scalarAdd("fxmonitor.never_show_btn_clicked", 1);
         },
       },
     ];
