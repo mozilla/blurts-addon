@@ -165,9 +165,32 @@ this.FirefoxMonitor = {
 
     this.domainMap.clear();
     sites.forEach(site => {
+      // Round the PwnCount:
+      // If < 100k: keep as is; e.g. 12,345 -> 12,345
+      // If < 1M: round to nearest 100k; e.g. 234,567 -> 200,000
+      // If < 1B: round to nearest millions; e.g. 123,456,789 -> 123 million
+      // If >= 1B: round to nearest billions; e.g. 9,123,456,789 -> 9 billion
+      let k100k = 100000;
+      let k1m = 1000000;
+      let k1b = 1000000000;
+      if (site.PwnCount < k100k) {
+        site.PwnCount = site.PwnCount.toLocaleString();
+      } else if (site.PwnCount < k1m) {
+        let pwnCount = site.PwnCount - site.PwnCount%k100k;
+        site.PwnCount = pwnCount.toLocaleString();
+      } else if (site.PwnCount < k1b) {
+        let pwnCount = Math.floor(site.PwnCount / k1m);
+        site.PwnCount = this.getFormattedString("fxmonitor.popupText.millionUnit",
+                                                [pwnCount.toLocaleString()]);
+      } else {
+        let pwnCount = Math.floor(site.PwnCount / k1b);
+        site.PwnCount = this.getFormattedString("fxmonitor.popupText.billionUnit",
+                                                [pwnCount.toLocaleString()]);
+      }
+
       this.domainMap.set(site.Domain, {
         Name: site.Name,
-        PwnCount: site.PwnCount.toLocaleString(),
+        PwnCount: site.PwnCount,
         Year: (new Date(site.BreachDate)).getFullYear(),
       });
     });
@@ -328,10 +351,28 @@ this.FirefoxMonitor = {
     let win = doc.defaultView;
     let panelUI = doc.defaultView.FirefoxMonitorPanelUI;
 
+    let animatedOnce = false;
     let populatePanel = (event) => {
       switch (event) {
         case "showing":
           panelUI.refresh(this.domainMap.get(host));
+          if (animatedOnce) {
+            // If we've already animated once for this site, don't animate again.
+            doc.getElementById("notification-popup")
+               .setAttribute("fxmonitoranimationdone", "true");
+            doc.getElementById(`${this.kNotificationID}-notification-anchor`)
+               .setAttribute("fxmonitoranimationdone", "true");
+            break;
+          }
+          // Make sure we animate if we're coming from another tab that has
+          // this attribute set.
+          doc.getElementById("notification-popup")
+             .removeAttribute("fxmonitoranimationdone");
+          doc.getElementById(`${this.kNotificationID}-notification-anchor`)
+             .removeAttribute("fxmonitoranimationdone");
+          break;
+        case "shown":
+          animatedOnce = true;
           break;
         case "removed":
           win.FirefoxMonitorUtils.notifications.delete(

@@ -24,16 +24,20 @@
   animation-duration: 0.66s;
 }
 
-#fxmonitor-notification-anchor {
+#fxmonitor-notification-anchor:not([fxmonitoranimationdone]) {
   animation-name: fxmonitor-anchor-animation;
 }
 
-#fxmonitor-notification-anchor:-moz-locale-dir(rtl) {
+#fxmonitor-notification-anchor:not([fxmonitoranimationdone]):-moz-locale-dir(rtl) {
   animation-name: fxmonitor-anchor-animation-rtl;
 }
 
-.fxmonitor-icon {
+#fxmonitor-notification-anchor:not([fxmonitoranimationdone]) .fxmonitor-icon {
   animation-name: fxmonitor-icon-animation;
+}
+
+#notification-popup[popupid=fxmonitor]:not([fxmonitoranimationdone]) {
+  transition-delay: 0.33s;
 }
 
 /* Animate the appearance of the anchor icon: push the other icons to the right. */
@@ -64,9 +68,11 @@
 @keyframes fxmonitor-icon-animation {
   from {
     transform: scale(0);
+    opacity: 0;
   }
   50% {
     transform: scale(0);
+    opacity: 0;
   }
   75% {
     transform: scale(1.2);
