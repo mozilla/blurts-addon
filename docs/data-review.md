@@ -34,7 +34,7 @@
   <tr>
     <td>Scalars to measure user engagement with the doorhanger UI</td>
     <td>Interaction data</td>
-    <td> - </td>
+    <td>Bug 1485651</td>
   </tr>
 </table>
 
@@ -63,4 +63,4 @@
 * Follow our general practice to analyze event telemetry.
 
 10) Where do you intend to share the results of your analysis?
-* To Firefox team. Results will likely be shared on a mailing list and/or Bugzilla.
+* To Firefox team. Results will likely be shared on a mailing list and/or Bugzilla (bug 1485651)
