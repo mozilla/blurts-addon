@@ -24,6 +24,8 @@
   animation-duration: 0.66s;
 }
 
+/* We only want to animate the icon/doorhanger the first time it's shown for a site.
+   An attribute fxmonitoranimationdone is used to control this from FirefoxMonitor.jsm */
 #fxmonitor-notification-anchor:not([fxmonitoranimationdone]) {
   animation-name: fxmonitor-anchor-animation;
 }
