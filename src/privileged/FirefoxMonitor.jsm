@@ -120,7 +120,7 @@ this.FirefoxMonitor = {
         this.warnedHostsSet = new Set(json);
       } catch (ex) {
         // Invalid JSON, invalidate the pref.
-        Preferences.set(this.kWarnedHostsPref, "");
+        Preferences.reset(this.kWarnedHostsPref);
       }
     }
 
