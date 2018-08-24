@@ -133,9 +133,12 @@ this.FirefoxMonitor = {
   },
 
   onUninstalled(aAddon) {
-    if (aAddon.id === this.extension.id) {
-      this.stopObserving();
+    if (aAddon.id !== this.extension.id) {
+      return;
     }
+
+    this.stopObserving();
+    AddonManager.removeAddonListener(this);
   },
 
   async loadStrings() {
