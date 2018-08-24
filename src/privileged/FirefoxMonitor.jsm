@@ -292,6 +292,8 @@ this.FirefoxMonitor = {
         win.gBrowser.addTabsProgressListener(this);
       },
       (win) => {
+        // If the window is being destroyed and gBrowser no longer exists,
+        // don't bother doing anything.
         if (!win.gBrowser) {
           return;
         }
