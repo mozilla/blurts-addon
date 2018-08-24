@@ -339,11 +339,7 @@ this.FirefoxMonitor = {
   },
 
   warnIfNeeded(browser, host) {
-    if (!this.enabled || this.warnedHostsSet.has(host)) {
-      return;
-    }
-
-    if (!this.domainMap.has(host)) {
+    if (!this.enabled || this.warnedHostsSet.has(host) || !this.domainMap.has(host)) {
       return;
     }
 
