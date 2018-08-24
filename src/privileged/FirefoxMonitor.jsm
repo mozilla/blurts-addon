@@ -52,9 +52,6 @@ this.FirefoxMonitor = {
       this, "enabled", this.kEnabledPref, false,
       async (pref, oldVal, newVal) => {
         if (newVal) {
-          if (!this._delayedInited) {
-            await this.delayedInit();
-          }
           this.startObserving();
         } else {
           this.stopObserving();
@@ -62,15 +59,20 @@ this.FirefoxMonitor = {
       }
     );
 
-    if (!this.enabled) {
+    if (this.enabled) {
+      this.startObserving();
+    }
+  },
+
+
+  // Used to enforce idempotency of delayedInit. delayedInit is
+  // called in startObserving() to ensure we load our strings, etc.
+  _delayedInited: false,
+  async delayedInit() {
+    if (this._delayedInited) {
       return;
     }
 
-    await this.delayedInit();
-    this.startObserving();
-  },
-
-  async delayedInit() {
     /* globals AddonManager, Preferences, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
@@ -221,10 +223,12 @@ this.FirefoxMonitor = {
     this.warnIfNeeded(aBrowser, host);
   },
 
-  startObserving() {
+  async startObserving() {
     if (this.observerAdded) {
       return;
     }
+
+    await this.delayedInit();
 
     EveryWindow.registerCallback(
       this.kNotificationID,
