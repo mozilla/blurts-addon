@@ -5,7 +5,7 @@ ChromeUtils.defineModuleGetter(this, "Services",
 
 this.fxmonitor = class extends ExtensionAPI {
   getAPI(context) {
-    const FirefoxMonitorContainer = {};
+    let FirefoxMonitorContainer = {};
     Services.scriptloader.loadSubScript(context.extension.getURL("privileged/FirefoxMonitor.jsm"),
                                         FirefoxMonitorContainer);
     return {
