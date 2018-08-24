@@ -6,7 +6,7 @@
   margin-top: 0;
 }
 
-#fxmonitor-notification .popup-notification-body > hbox:first-child {
+#fxmonitor-notification .popup-notification-body > :not(popupnotificationcontent) {
   display: none;
 }
 
