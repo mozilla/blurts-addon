@@ -204,8 +204,6 @@ this.FirefoxMonitor = {
 
   // nsIWebProgressListener implementation.
   onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-    let location = aRequest.URI;
-
     if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
         !Components.isSuccessCode(aStatus)) {
       return;
@@ -213,7 +211,7 @@ this.FirefoxMonitor = {
 
     let host;
     try {
-      host = Services.eTLD.getBaseDomain(location);
+      host = Services.eTLD.getBaseDomain(aRequest.URI);
     } catch (e) {
       // If we can't get the host for the URL, it's not one we
       // care about for breach alerts anyway.
@@ -289,7 +287,6 @@ this.FirefoxMonitor = {
         pn.setAttribute("hidden", "true");
         parentElt.appendChild(pn);
         win.FirefoxMonitorPanelUI = panelUI;
-
 
         // Start listening across all tabs!
         win.gBrowser.addTabsProgressListener(this);
