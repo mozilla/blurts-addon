@@ -4,15 +4,14 @@ function PanelUI(doc) {
   this.site = null;
   this.doc = doc;
 
-  const box = doc.createElementNS(XUL_NS, "vbox");
+  let box = doc.createElementNS(XUL_NS, "vbox");
 
   let elt;
 
   elt = doc.createElementNS(XUL_NS, "description");
-  elt.appendChild(doc.createTextNode(this.getString("fxmonitor.popupHeader")));
+  elt.textContent = this.getString("fxmonitor.popupHeader");
   elt.classList.add("headerText");
   box.appendChild(elt);
-
 
   elt = doc.createElementNS(XUL_NS, "description");
   elt.classList.add("popupText");
@@ -85,12 +84,7 @@ PanelUI.prototype = {
     this.site = site;
 
     let elt = this.box.querySelector(".popupText");
-
-    while (elt.firstChild) {
-      elt.firstChild.remove();
-    }
-
-    elt.appendChild(this.doc.createTextNode(this.getFormattedString(
-      "fxmonitor.popupText", [site.PwnCount, site.Name, site.Year, this.brandString])));
+    elt.textContent = this.getFormattedString(
+      "fxmonitor.popupText", [site.PwnCount, site.Name, site.Year, this.brandString]);
   },
 };

@@ -52,9 +52,6 @@ this.FirefoxMonitor = {
       this, "enabled", this.kEnabledPref, false,
       async (pref, oldVal, newVal) => {
         if (newVal) {
-          if (!this._delayedInited) {
-            await this.delayedInit();
-          }
           this.startObserving();
         } else {
           this.stopObserving();
@@ -62,15 +59,20 @@ this.FirefoxMonitor = {
       }
     );
 
-    if (!this.enabled) {
+    if (this.enabled) {
+      this.startObserving();
+    }
+  },
+
+
+  // Used to enforce idempotency of delayedInit. delayedInit is
+  // called in startObserving() to ensure we load our strings, etc.
+  _delayedInited: false,
+  async delayedInit() {
+    if (this._delayedInited) {
       return;
     }
 
-    await this.delayedInit();
-    this.startObserving();
-  },
-
-  async delayedInit() {
     /* globals AddonManager, Preferences, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
@@ -118,7 +120,7 @@ this.FirefoxMonitor = {
         this.warnedHostsSet = new Set(json);
       } catch (ex) {
         // Invalid JSON, invalidate the pref.
-        Preferences.set(this.kWarnedHostsPref, "");
+        Preferences.reset(this.kWarnedHostsPref);
       }
     }
 
@@ -131,9 +133,12 @@ this.FirefoxMonitor = {
   },
 
   onUninstalled(aAddon) {
-    if (aAddon.id === this.extension.id) {
-      this.stopObserving();
+    if (aAddon.id !== this.extension.id) {
+      return;
     }
+
+    this.stopObserving();
+    AddonManager.removeAddonListener(this);
   },
 
   async loadStrings() {
@@ -202,8 +207,6 @@ this.FirefoxMonitor = {
 
   // nsIWebProgressListener implementation.
   onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-    let location = aRequest.URI;
-
     if (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
         !Components.isSuccessCode(aStatus)) {
       return;
@@ -211,7 +214,7 @@ this.FirefoxMonitor = {
 
     let host;
     try {
-      host = Services.eTLD.getBaseDomain(location);
+      host = Services.eTLD.getBaseDomain(aRequest.URI);
     } catch (e) {
       // If we can't get the host for the URL, it's not one we
       // care about for breach alerts anyway.
@@ -221,10 +224,12 @@ this.FirefoxMonitor = {
     this.warnIfNeeded(aBrowser, host);
   },
 
-  startObserving() {
+  async startObserving() {
     if (this.observerAdded) {
       return;
     }
+
+    await this.delayedInit();
 
     EveryWindow.registerCallback(
       this.kNotificationID,
@@ -286,11 +291,12 @@ this.FirefoxMonitor = {
         parentElt.appendChild(pn);
         win.FirefoxMonitorPanelUI = panelUI;
 
-
         // Start listening across all tabs!
         win.gBrowser.addTabsProgressListener(this);
       },
       (win) => {
+        // If the window is being destroyed and gBrowser no longer exists,
+        // don't bother doing anything.
         if (!win.gBrowser) {
           return;
         }
@@ -336,11 +342,7 @@ this.FirefoxMonitor = {
   },
 
   warnIfNeeded(browser, host) {
-    if (!this.enabled || this.warnedHostsSet.has(host)) {
-      return;
-    }
-
-    if (!this.domainMap.has(host)) {
+    if (!this.enabled || this.warnedHostsSet.has(host) || !this.domainMap.has(host)) {
       return;
     }
 
