@@ -205,8 +205,10 @@ this.FirefoxMonitor = {
     // Arm the refresh timer already, since we may return early if we 304'd.
     this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
 
-    // 304 is Not Modified - nothing to do.
-    if (response.status == 304) {
+    // If the list hasn't been updated since we last checked, the server
+    // will send a 304 response. In any case, we don't handle anything
+    // except a 200 OK.
+    if (response.status !== 200) {
       return;
     }
 
