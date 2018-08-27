@@ -275,6 +275,7 @@ this.FirefoxMonitor = {
         let img = doc.createElementNS(XUL_NS, "image");
         img.setAttribute("role", "button");
         img.classList.add(`${this.kNotificationID}-icon`);
+        img.style.listStyleImage = `url(${this.getURL("assets/alert.svg")})`;
         box2.appendChild(img);
         box.appendChild(box2);
         // TODO: Add a tooltip to the image once content is provided by UX.
@@ -386,8 +387,14 @@ this.FirefoxMonitor = {
 
     let n = win.PopupNotifications.show(
       browser, this.kNotificationID, "",
-      `${this.kNotificationID}-notification-anchor`, panelUI.primaryAction, panelUI.secondaryActions,
-      {persistent: true, hideClose: true, eventCallback: populatePanel});
+      `${this.kNotificationID}-notification-anchor`,
+      panelUI.primaryAction, panelUI.secondaryActions, {
+        persistent: true,
+        hideClose: true,
+        eventCallback: populatePanel,
+        popupIconURL: this.getURL("assets/alert.svg")
+      }
+    );
 
     Services.telemetry.scalarAdd("fxmonitor.doorhanger_shown", 1);
 
