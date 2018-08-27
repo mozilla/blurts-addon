@@ -292,7 +292,7 @@ this.FirefoxMonitor = {
             return this.getFormattedString(aKey, args);
           },
           getFirefoxMonitorURL: (aSiteName) => {
-            return `${this.FirefoxMonitorURL}/?breach=${aSiteName}&utm_source=firefox&utm_medium=popup`;
+            return `${this.FirefoxMonitorURL}/?breach=${encodeURIComponent(aSiteName)}&utm_source=firefox&utm_medium=popup`;
           },
         };
 
