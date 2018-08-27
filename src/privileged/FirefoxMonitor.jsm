@@ -196,11 +196,17 @@ this.FirefoxMonitor = {
   _loadBreachesTimer: null,
   _breachesLastModified: 0,
   async loadBreaches() {
-    let response = await fetch(this.breachListURL, {
-      headers: {
-        "If-Modified-Since": this._breachesLastModified,
-      },
-    });
+    let response;
+    try {
+      response = await fetch(this.breachListURL, {
+        headers: {
+          "If-Modified-Since": this._breachesLastModified,
+        },
+      });
+    } catch (e) {
+      // Fetch only rejects on network failures or other anomalies;
+      // response will be undefined and we'll return early.
+    }
 
     // Arm the refresh timer already, since we may return early if we 304'd.
     this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
@@ -208,7 +214,7 @@ this.FirefoxMonitor = {
     // If the list hasn't been updated since we last checked, the server
     // will send a 304 response. In any case, we don't handle anything
     // except a 200 OK.
-    if (response.status !== 200) {
+    if (!response || response.status !== 200) {
       return;
     }
 
