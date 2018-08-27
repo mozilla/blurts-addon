@@ -40,7 +40,7 @@ PanelUI.prototype = {
     if (this._brandString) {
       return this._brandString;
     }
-    return this._brandString = this.getString("fxmonitor.FirefoxMonitor");
+    return this._brandString = this.getString("fxmonitor.brandName");
   },
 
   get primaryAction() {
