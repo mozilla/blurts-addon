@@ -29,6 +29,22 @@ this.FirefoxMonitor = {
 
   kNotificationID: "fxmonitor",
 
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the URL from which to fetch
+  // the list of breached sites.
+  breachListURL: null,
+  kBreachListURLPref: "extensions.fxmonitor.breachListURL",
+  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
+
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the timeout after which to
+  // refresh our list of breached sites.
+  breachRefreshTimeout: null,
+  kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
+  kDefaultBreachRefreshTimeout: 60 * 60 * 1000,
+
   disable() {
     Preferences.set(this.kEnabledPref, false);
   },
@@ -124,6 +140,12 @@ this.FirefoxMonitor = {
       }
     }
 
+    XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
+      this.kBreachListURLPref, this.kDefaultBreachListURL);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
+      this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
+
     await this.loadStrings();
     await this.loadBreaches();
 
@@ -165,7 +187,7 @@ this.FirefoxMonitor = {
     // TODO: check first if the list of breaches was updated
     //       since we last checked, before downloading it.
     //       (pending repsonse from Troy about how to do this)
-    let response = await fetch("https://haveibeenpwned.com/api/v2/breaches");
+    let response = await fetch(this.breachListURL);
     let sites = await response.json();
 
     this.domainMap.clear();
@@ -200,9 +222,7 @@ this.FirefoxMonitor = {
       });
     });
 
-    // Refresh every hour.
-    let one_hour = 60 * 60 * 1000;
-    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), one_hour);
+    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
   },
 
   // nsIWebProgressListener implementation.
