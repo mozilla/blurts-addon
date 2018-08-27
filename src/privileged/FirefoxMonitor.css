@@ -6,12 +6,9 @@
   display: none;
 }
 
-#fxmonitor-notification .popup-notification-icon,
 .fxmonitor-icon {
-  list-style-image: url("chrome://browser/skin/warning.svg");
-  fill: rgba(12, 12, 13, 0.6); /* Gray 90 a60 */
-  stroke: transparent;
-  -moz-context-properties: fill, stroke;
+  width: 16px;
+  height: 16px;
 }
 
 #fxmonitor-notification-anchor,

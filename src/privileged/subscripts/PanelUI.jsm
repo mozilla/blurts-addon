@@ -50,8 +50,9 @@ PanelUI.prototype = {
       label: this.getFormattedString("fxmonitor.checkButton.label", [this.brandString]),
       accessKey: this.getString("fxmonitor.checkButton.accessKey"),
       callback: () => {
-        this.doc.defaultView.openTrustedLinkIn(
-          `https://monitor.firefox.com/?breach=${this.site.Name}`, "tab", { });
+        let win = this.doc.defaultView;
+        win.openTrustedLinkIn(
+          win.FirefoxMonitorUtils.getFirefoxMonitorURL(this.site.Name), "tab", { });
 
         Services.telemetry.scalarAdd("fxmonitor.check_btn_clicked", 1);
       },

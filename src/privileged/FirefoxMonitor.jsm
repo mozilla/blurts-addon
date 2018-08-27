@@ -29,6 +29,30 @@ this.FirefoxMonitor = {
 
   kNotificationID: "fxmonitor",
 
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the URL from which to fetch
+  // the list of breached sites.
+  breachListURL: null,
+  kBreachListURLPref: "extensions.fxmonitor.breachListURL",
+  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
+
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the timeout after which to
+  // refresh our list of breached sites.
+  breachRefreshTimeout: null,
+  kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
+  kDefaultBreachRefreshTimeout: 60 * 60 * 1000,
+
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the URL to which the user
+  // is directed when they click "Check Firefox Monitor".
+  FirefoxMonitorURL: null,
+  kFirefoxMonitorURLPref: "extensions.fxmonitor.FirefoxMonitorURL",
+  kDefaultFirefoxMonitorURL: "https://monitor.firefox.com",
+
   disable() {
     Preferences.set(this.kEnabledPref, false);
   },
@@ -124,6 +148,15 @@ this.FirefoxMonitor = {
       }
     }
 
+    XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
+      this.kBreachListURLPref, this.kDefaultBreachListURL);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
+      this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "FirefoxMonitorURL",
+      this.kFirefoxMonitorURLPref, this.kDefaultFirefoxMonitorURL);
+
     await this.loadStrings();
     await this.loadBreaches();
 
@@ -165,7 +198,7 @@ this.FirefoxMonitor = {
     // TODO: check first if the list of breaches was updated
     //       since we last checked, before downloading it.
     //       (pending repsonse from Troy about how to do this)
-    let response = await fetch("https://haveibeenpwned.com/api/v2/breaches");
+    let response = await fetch(this.breachListURL);
     let sites = await response.json();
 
     this.domainMap.clear();
@@ -200,9 +233,7 @@ this.FirefoxMonitor = {
       });
     });
 
-    // Refresh every hour.
-    let one_hour = 60 * 60 * 1000;
-    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), one_hour);
+    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
   },
 
   // nsIWebProgressListener implementation.
@@ -260,6 +291,9 @@ this.FirefoxMonitor = {
           getFormattedString: (aKey, args) => {
             return this.getFormattedString(aKey, args);
           },
+          getFirefoxMonitorURL: (aSiteName) => {
+            return `${this.FirefoxMonitorURL}/?breach=${encodeURIComponent(aSiteName)}&utm_source=firefox&utm_medium=popup`;
+          },
         };
 
         // Setup the popup notification stuff. First, the URL bar icon:
@@ -275,6 +309,7 @@ this.FirefoxMonitor = {
         let img = doc.createElementNS(XUL_NS, "image");
         img.setAttribute("role", "button");
         img.classList.add(`${this.kNotificationID}-icon`);
+        img.style.listStyleImage = `url(${this.getURL("assets/alert.svg")})`;
         box2.appendChild(img);
         box.appendChild(box2);
         // TODO: Add a tooltip to the image once content is provided by UX.
@@ -386,8 +421,14 @@ this.FirefoxMonitor = {
 
     let n = win.PopupNotifications.show(
       browser, this.kNotificationID, "",
-      `${this.kNotificationID}-notification-anchor`, panelUI.primaryAction, panelUI.secondaryActions,
-      {persistent: true, hideClose: true, eventCallback: populatePanel});
+      `${this.kNotificationID}-notification-anchor`,
+      panelUI.primaryAction, panelUI.secondaryActions, {
+        persistent: true,
+        hideClose: true,
+        eventCallback: populatePanel,
+        popupIconURL: this.getURL("assets/alert.svg")
+      }
+    );
 
     Services.telemetry.scalarAdd("fxmonitor.doorhanger_shown", 1);
 
