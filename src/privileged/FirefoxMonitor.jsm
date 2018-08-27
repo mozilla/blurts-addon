@@ -218,7 +218,7 @@ this.FirefoxMonitor = {
       return;
     }
 
-    this._breachesLastModified = response.headers.get("Last-Modified");
+    this._breachesLastModified = response.headers.get("Last-Modified") || new Date().toUTCString();
 
     let sites = await response.json();
 
