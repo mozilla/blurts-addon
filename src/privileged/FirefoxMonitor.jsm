@@ -45,6 +45,14 @@ this.FirefoxMonitor = {
   kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
   kDefaultBreachRefreshTimeout: 60 * 60 * 1000,
 
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The value of this property is used as the URL to which the user
+  // is directed when they click "Check Firefox Monitor".
+  FirefoxMonitorURL: null,
+  kFirefoxMonitorURLPref: "extensions.fxmonitor.FirefoxMonitorURL",
+  kDefaultFirefoxMonitorURL: "https://monitor.firefox.com",
+
   disable() {
     Preferences.set(this.kEnabledPref, false);
   },
@@ -145,6 +153,9 @@ this.FirefoxMonitor = {
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
       this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "FirefoxMonitorURL",
+      this.kFirefoxMonitorURLPref, this.kDefaultFirefoxMonitorURL);
 
     await this.loadStrings();
     await this.loadBreaches();
@@ -279,6 +290,9 @@ this.FirefoxMonitor = {
           },
           getFormattedString: (aKey, args) => {
             return this.getFormattedString(aKey, args);
+          },
+          getFirefoxMonitorURL: (aSiteName) => {
+            return `${this.FirefoxMonitorURL}/?breach=${aSiteName}&utm_source=firefox&utm_medium=popup`;
           },
         };
 
