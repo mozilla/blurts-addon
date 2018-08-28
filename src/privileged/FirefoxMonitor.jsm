@@ -332,7 +332,9 @@ this.FirefoxMonitor = {
         img.style.listStyleImage = `url(${this.getURL("assets/alert.svg")})`;
         box2.appendChild(img);
         box.appendChild(box2);
-        // TODO: Add a tooltip to the image once content is provided by UX.
+        img.setAttribute("tooltiptext",
+          this.getFormattedString("fxmonitor.anchorIcon.tooltiptext",
+                                  [this.getString("fxmonitor.brandName")]));
 
         // Now, the popupnotificationcontent:
         let parentElt = doc.defaultView.PopupNotifications.panel.parentNode;
