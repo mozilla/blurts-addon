@@ -35,7 +35,7 @@ this.FirefoxMonitor = {
   // the list of breached sites.
   breachListURL: null,
   kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
+  kDefaultBreachListURL: "https://monitor.firefox.com/hibp/breaches",
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
@@ -43,7 +43,7 @@ this.FirefoxMonitor = {
   // refresh our list of breached sites.
   breachRefreshTimeout: null,
   kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
-  kDefaultBreachRefreshTimeout: 60 * 60 * 1000,
+  kDefaultBreachRefreshTimeout: 10 * 60 * 1000, // 10 minutes
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
@@ -194,11 +194,33 @@ this.FirefoxMonitor = {
   },
 
   _loadBreachesTimer: null,
+  _breachesLastModified: 0,
   async loadBreaches() {
-    // TODO: check first if the list of breaches was updated
-    //       since we last checked, before downloading it.
-    //       (pending repsonse from Troy about how to do this)
-    let response = await fetch(this.breachListURL);
+    let response;
+    try {
+      response = await fetch(this.breachListURL, {
+        credentials: "omit",
+        headers: {
+          "If-Modified-Since": this._breachesLastModified,
+        },
+      });
+    } catch (e) {
+      // Fetch only rejects on network failures or other anomalies;
+      // response will be undefined and we'll return early.
+    }
+
+    // Arm the refresh timer already, since we may return early if we 304'd.
+    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
+
+    // If the list hasn't been updated since we last checked, the server
+    // will send a 304 response. In any case, we don't handle anything
+    // except a 200 OK.
+    if (!response || response.status !== 200) {
+      return;
+    }
+
+    this._breachesLastModified = response.headers.get("Last-Modified") || new Date().toUTCString();
+
     let sites = await response.json();
 
     this.domainMap.clear();
@@ -232,8 +254,6 @@ this.FirefoxMonitor = {
         Year: (new Date(site.BreachDate)).getFullYear(),
       });
     });
-
-    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
   },
 
   // nsIWebProgressListener implementation.
