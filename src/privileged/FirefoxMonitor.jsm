@@ -199,6 +199,7 @@ this.FirefoxMonitor = {
     let response;
     try {
       response = await fetch(this.breachListURL, {
+        credentials: "omit",
         headers: {
           "If-Modified-Since": this._breachesLastModified,
         },
