@@ -165,13 +165,17 @@ this.FirefoxMonitor = {
     this._delayedInited = true;
   },
 
-  onUninstalled(aAddon) {
+  onDisabling(aAddon) {
     if (aAddon.id !== this.extension.id) {
       return;
     }
 
     this.stopObserving();
     AddonManager.removeAddonListener(this);
+  },
+
+  onUninstalling(aAddon) {
+    this.onDisabling(aAddon);
   },
 
   async loadStrings() {
