@@ -97,7 +97,7 @@ this.FirefoxMonitor = {
       return;
     }
 
-    /* globals AddonManager, Preferences, fetch, btoa, XUL_NS */
+    /* globals Preferences, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
 
@@ -148,22 +148,7 @@ this.FirefoxMonitor = {
     await this.loadStrings();
     await this.loadBreaches();
 
-    AddonManager.addAddonListener(this);
-
     this._delayedInited = true;
-  },
-
-  onDisabling(aAddon) {
-    if (aAddon.id !== this.extension.id) {
-      return;
-    }
-
-    this.stopObserving();
-    AddonManager.removeAddonListener(this);
-  },
-
-  onUninstalling(aAddon) {
-    this.onDisabling(aAddon);
   },
 
   async loadStrings() {
