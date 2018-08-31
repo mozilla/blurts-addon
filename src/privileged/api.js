@@ -3,9 +3,10 @@
 ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
 
+let FirefoxMonitorContainer = {};
+
 this.fxmonitor = class extends ExtensionAPI {
   getAPI(context) {
-    let FirefoxMonitorContainer = {};
     Services.scriptloader.loadSubScript(context.extension.getURL("privileged/FirefoxMonitor.jsm"),
                                         FirefoxMonitorContainer);
     return {
@@ -15,5 +16,13 @@ this.fxmonitor = class extends ExtensionAPI {
         },
       },
     };
+  }
+
+  onShutdown(shutdownReason) {
+    if (!FirefoxMonitorContainer.FirefoxMonitor) {
+      return;
+    }
+
+    FirefoxMonitorContainer.FirefoxMonitor.stopObserving();
   }
 };

@@ -97,7 +97,7 @@ this.FirefoxMonitor = {
       return;
     }
 
-    /* globals AddonManager, Preferences, fetch, btoa, XUL_NS */
+    /* globals Preferences, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
 
@@ -109,33 +109,21 @@ this.FirefoxMonitor = {
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/PanelUI.jsm"));
 
-    Services.telemetry.registerScalars("fxmonitor", {
-      "doorhanger_shown": {
-        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-        keyed: false,
-        record_on_release: true,
-      },
-      "doorhanger_removed": {
-        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-        keyed: false,
-        record_on_release: true,
-      },
-      "check_btn_clicked": {
-        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-        keyed: false,
-        record_on_release: true,
-      },
-      "dismiss_btn_clicked": {
-        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-        keyed: false,
-        record_on_release: true,
-      },
-      "never_show_btn_clicked": {
-        kind: Ci.nsITelemetry.SCALAR_TYPE_COUNT,
-        keyed: false,
+    Services.telemetry.registerEvents("fxmonitor", {
+      "interaction": {
+        methods: ["interaction"],
+        objects: [
+          "doorhanger_shown",
+          "doorhanger_removed",
+          "check_btn",
+          "dismiss_btn",
+          "never_show_btn",
+        ],
         record_on_release: true,
       },
     });
+
+    Services.telemetry.setEventRecordingEnabled("fxmonitor", true);
 
     let warnedHostsJSON = Preferences.get(this.kWarnedHostsPref, "");
     if (warnedHostsJSON) {
@@ -160,22 +148,7 @@ this.FirefoxMonitor = {
     await this.loadStrings();
     await this.loadBreaches();
 
-    AddonManager.addAddonListener(this);
-
     this._delayedInited = true;
-  },
-
-  onDisabling(aAddon) {
-    if (aAddon.id !== this.extension.id) {
-      return;
-    }
-
-    this.stopObserving();
-    AddonManager.removeAddonListener(this);
-  },
-
-  onUninstalling(aAddon) {
-    this.onDisabling(aAddon);
   },
 
   async loadStrings() {
@@ -440,7 +413,7 @@ this.FirefoxMonitor = {
         case "removed":
           win.FirefoxMonitorUtils.notifications.delete(
             win.PopupNotifications.getNotification(this.kNotificationID, browser));
-          Services.telemetry.scalarAdd("fxmonitor.doorhanger_removed", 1);
+          Services.telemetry.recordEvent("fxmonitor", "interaction", "doorhanger_removed");
           break;
       }
     };
@@ -456,7 +429,7 @@ this.FirefoxMonitor = {
       }
     );
 
-    Services.telemetry.scalarAdd("fxmonitor.doorhanger_shown", 1);
+    Services.telemetry.recordEvent("fxmonitor", "interaction", "doorhanger_shown");
 
     win.FirefoxMonitorUtils.notifications.add(n);
   },

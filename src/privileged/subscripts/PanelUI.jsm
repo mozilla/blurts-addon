@@ -54,7 +54,7 @@ PanelUI.prototype = {
         win.openTrustedLinkIn(
           win.FirefoxMonitorUtils.getFirefoxMonitorURL(this.site.Name), "tab", { });
 
-        Services.telemetry.scalarAdd("fxmonitor.check_btn_clicked", 1);
+        Services.telemetry.recordEvent("fxmonitor", "interaction", "check_btn");
       },
     };
   },
@@ -68,14 +68,14 @@ PanelUI.prototype = {
         label: this.getString("fxmonitor.dismissButton.label"),
         accessKey: this.getString("fxmonitor.dismissButton.accessKey"),
         callback: () => {
-          Services.telemetry.scalarAdd("fxmonitor.dismiss_btn_clicked", 1);
+          Services.telemetry.recordEvent("fxmonitor", "interaction", "dismiss_btn");
         },
       }, {
         label: this.getFormattedString("fxmonitor.neverShowButton.label", [this.brandString]),
         accessKey: this.getString("fxmonitor.neverShowButton.accessKey"),
         callback: () => {
           this.FirefoxMonitorUtils.disable();
-          Services.telemetry.scalarAdd("fxmonitor.never_show_btn_clicked", 1);
+          Services.telemetry.recordEvent("fxmonitor", "interaction", "never_show_btn");
         },
       },
     ];
