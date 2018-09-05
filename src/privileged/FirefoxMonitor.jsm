@@ -35,7 +35,7 @@ this.FirefoxMonitor = {
   // the list of breached sites.
   breachListURL: null,
   kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: "https://monitor.firefox.com/hibp/breaches",
+  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
@@ -43,7 +43,7 @@ this.FirefoxMonitor = {
   // refresh our list of breached sites.
   breachRefreshTimeout: null,
   kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
-  kDefaultBreachRefreshTimeout: 10 * 60 * 1000, // 10 minutes
+  kDefaultBreachRefreshTimeout: 60 * 60 * 1000, // One hour
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
