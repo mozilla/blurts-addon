@@ -32,7 +32,7 @@
     <td>Tracking Bug #</td>
   </tr>
   <tr>
-    <td>Scalars to measure user engagement with the doorhanger UI</td>
+    <td>Events to measure user engagement with the doorhanger UI</td>
     <td>Interaction data</td>
     <td>Bug 1485651</td>
   </tr>
