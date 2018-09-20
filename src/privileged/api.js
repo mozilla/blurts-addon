@@ -19,7 +19,7 @@ this.fxmonitor = class extends ExtensionAPI {
   }
 
   onShutdown(shutdownReason) {
-    if (!FirefoxMonitorContainer.FirefoxMonitor) {
+    if (Services.startup.shuttingDown || !FirefoxMonitorContainer.FirefoxMonitor) {
       return;
     }
 
