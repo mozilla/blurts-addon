@@ -136,10 +136,8 @@ this.FirefoxMonitor = {
       }
     }
 
-    //XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
-    //  this.kBreachListURLPref, this.kDefaultBreachListURL);
-    // We're packaging the breaches into the addon for now.
-    this.breachListURL = this.getURL("assets/breaches.json")
+    XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
+      this.kBreachListURLPref, this.getURL("assets/breaches.json"));
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
       this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
