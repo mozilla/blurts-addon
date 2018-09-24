@@ -35,7 +35,7 @@ this.FirefoxMonitor = {
   // the list of breached sites.
   breachListURL: null,
   kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
+  kDefaultBreachListURL: null,
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
