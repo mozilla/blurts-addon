@@ -35,7 +35,7 @@ this.FirefoxMonitor = {
   // the list of breached sites.
   breachListURL: null,
   kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: "https://haveibeenpwned.com/api/v2/breaches",
+  kDefaultBreachListURL: null,
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
@@ -43,7 +43,7 @@ this.FirefoxMonitor = {
   // refresh our list of breached sites.
   breachRefreshTimeout: null,
   kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
-  kDefaultBreachRefreshTimeout: 60 * 60 * 1000, // One hour
+  kDefaultBreachRefreshTimeout: 24 * 60 * 60 * 1000, // 24 hours
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
@@ -137,7 +137,7 @@ this.FirefoxMonitor = {
     }
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
-      this.kBreachListURLPref, this.kDefaultBreachListURL);
+      this.kBreachListURLPref, this.getURL("assets/breaches.json"));
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
       this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
@@ -187,7 +187,8 @@ this.FirefoxMonitor = {
     }
 
     // Arm the refresh timer already, since we may return early if we 304'd.
-    this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
+    // Commented out for now since we are packaging breaches in the addon.
+    // this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
 
     // If the list hasn't been updated since we last checked, the server
     // will send a 304 response. In any case, we don't handle anything

@@ -1,7 +1,7 @@
 {
   "name": "blurts-addon",
   "description": "Firefox Monitor",
-  "version": "2.2.0",
+  "version": "2.4.0",
   "author": "Mozilla",
   "bugs": {
     "url": "https://github.com/mozilla/blurts-addon/issues"
