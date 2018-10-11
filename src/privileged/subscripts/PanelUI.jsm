@@ -85,7 +85,31 @@ PanelUI.prototype = {
     this.site = site;
 
     let elt = this.box.querySelector(".popupText");
-    elt.textContent = this.getFormattedString(
-      "fxmonitor.popupText", [site.PwnCount, site.Name, site.Year, this.brandString]);
+
+    // If > 100k, the PwnCount is rounded down to the most significant
+    // digit and prefixed with "More than".
+    // Ex.: 12,345 -> 12,345
+    //      234,567 -> More than 200,000
+    //      345,678,901 -> More than 300,000,000
+    //      4,567,890,123 -> More than 4,000,000,000
+    let k100k = 100000;
+    let pwnCount = site.PwnCount;
+    let stringName = "fxmonitor.popupText";
+    if (pwnCount > k100k) {
+      let multiplier = 1;
+      while (pwnCount >= 10) {
+        pwnCount /= 10;
+        multiplier *= 10;
+      }
+      pwnCount = Math.floor(pwnCount) * multiplier;
+      stringName = "fxmonitor.popupTextRounded";
+    }
+
+    elt.textContent =
+      PluralForm.get(pwnCount, this.getString(stringName))
+                .replace("#1", pwnCount.toLocaleString())
+                .replace("#2", site.Name)
+                .replace("#3", site.Year)
+                .replace("#4", this.brandString);
   },
 };
