@@ -203,29 +203,6 @@ this.FirefoxMonitor = {
 
     this.domainMap.clear();
     sites.forEach(site => {
-      // Round the PwnCount:
-      // If < 100k: keep as is; e.g. 12,345 -> 12,345
-      // If < 1M: round to nearest 100k; e.g. 234,567 -> 200,000
-      // If < 1B: round to nearest millions; e.g. 123,456,789 -> 123 million
-      // If >= 1B: round to nearest billions; e.g. 9,123,456,789 -> 9 billion
-      let k100k = 100000;
-      let k1m = 1000000;
-      let k1b = 1000000000;
-      if (site.PwnCount < k100k) {
-        site.PwnCount = site.PwnCount.toLocaleString();
-      } else if (site.PwnCount < k1m) {
-        let pwnCount = site.PwnCount - site.PwnCount%k100k;
-        site.PwnCount = pwnCount.toLocaleString();
-      } else if (site.PwnCount < k1b) {
-        let pwnCount = Math.floor(site.PwnCount / k1m);
-        site.PwnCount = this.getFormattedString("fxmonitor.popupText.millionUnit",
-                                                [pwnCount.toLocaleString()]);
-      } else {
-        let pwnCount = Math.floor(site.PwnCount / k1b);
-        site.PwnCount = this.getFormattedString("fxmonitor.popupText.billionUnit",
-                                                [pwnCount.toLocaleString()]);
-      }
-
       this.domainMap.set(site.Domain, {
         Name: site.Name,
         PwnCount: site.PwnCount,
