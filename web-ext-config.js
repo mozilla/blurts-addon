@@ -13,7 +13,7 @@ const defaultConfig = {
     firefox: process.env.FIREFOX_BINARY || "firefox",
     browserConsole: false,
     startUrl: ["about:debugging"],
-    pref: ["extensions.fxmonitor.enabled=true"],
+    pref: ["extensions.fxmonitor.enabled=true", "extensions.fxmonitor.debug=true"],
   },
 };
 

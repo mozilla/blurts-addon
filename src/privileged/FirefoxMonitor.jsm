@@ -53,6 +53,11 @@ this.FirefoxMonitor = {
   kFirefoxMonitorURLPref: "extensions.fxmonitor.FirefoxMonitorURL",
   kDefaultFirefoxMonitorURL: "https://monitor.firefox.com",
 
+  kDebugPref: "extensions.fxmonitor.debug",
+  get debug() {
+    return Preferences.get(this.kDebugPref, false),
+  },
+
   disable() {
     Preferences.set(this.kEnabledPref, false);
   },
@@ -156,9 +161,9 @@ this.FirefoxMonitor = {
     // accepts. moz-extension: is not one of them, so we work around that
     // by reading the file manually and creating a data: URL (allowed).
     // TODO:
-    // - Check locale and load relevant file
     // - Optimize?
-    let response = await fetch(this.getURL("locales/en_US/strings.properties"));
+    let locale = Services.locale.defaultLocale;
+    let response = await fetch(this.getURL(`locales/${locale}/strings.properties`));
     let buffer = await response.arrayBuffer();
     let binary = "";
     let bytes = new Uint8Array(buffer);
@@ -170,45 +175,34 @@ this.FirefoxMonitor = {
     this.strings = Services.strings.createBundle(`data:text/plain;base64,${b64}`);
   },
 
-  _loadBreachesTimer: null,
-  _breachesLastModified: 0,
+  kRemoteSettingsKey: "fxmonitor-breaches",
   async loadBreaches() {
-    let response;
-    try {
-      response = await fetch(this.breachListURL, {
-        credentials: "omit",
-        headers: {
-          "If-Modified-Since": this._breachesLastModified,
-        },
+    const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
+
+    let populateSites = (data) => {
+      this.domainMap.clear();
+      data.forEach(site => {
+        this.domainMap.set(site.Domain, {
+          Name: site.Name,
+          PwnCount: site.PwnCount,
+          Year: (new Date(site.BreachDate)).getFullYear(),
+        });
       });
-    } catch (e) {
-      // Fetch only rejects on network failures or other anomalies;
-      // response will be undefined and we'll return early.
     }
 
-    // Arm the refresh timer already, since we may return early if we 304'd.
-    // Commented out for now since we are packaging breaches in the addon.
-    // this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
-
-    // If the list hasn't been updated since we last checked, the server
-    // will send a 304 response. In any case, we don't handle anything
-    // except a 200 OK.
-    if (!response || response.status !== 200) {
-      return;
-    }
-
-    this._breachesLastModified = response.headers.get("Last-Modified") || new Date().toUTCString();
-
-    let sites = await response.json();
-
-    this.domainMap.clear();
-    sites.forEach(site => {
-      this.domainMap.set(site.Domain, {
-        Name: site.Name,
-        PwnCount: site.PwnCount,
-        Year: (new Date(site.BreachDate)).getFullYear(),
-      });
+    RemoteSettings(this.kRemoteSettingsKey).on("sync", (event) => {
+      const { data: { current } } = event;
+      populateSites(current);
     });
+
+    const data = await RemoteSettings(this.kRemoteSettingsKey).get();
+    if (data && data.length) {
+      populateSites(data);
+    }
+    else if (this.debug) {
+      // Force a sync if we're debugging. This will trigger the on("sync") callback.
+      RemoteSettings(this.kRemoteSettingsKey).maybeSync(Infinity, Date.now());
+    }
   },
 
   // nsIWebProgressListener implementation.
@@ -345,10 +339,6 @@ this.FirefoxMonitor = {
     }
 
     EveryWindow.unregisterCallback(this.kNotificationID);
-
-    if (this._loadBreachesTimer) {
-      clearTimeout(this._loadBreachesTimer);
-    }
 
     this.observerAdded = false;
   },
