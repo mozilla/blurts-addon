@@ -31,27 +31,23 @@ this.FirefoxMonitor = {
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
-  // The value of this property is used as the URL from which to fetch
-  // the list of breached sites.
-  breachListURL: null,
-  kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: null,
-
-  // This is here for documentation, will be redefined to a pref getter
-  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
-  // The value of this property is used as the timeout after which to
-  // refresh our list of breached sites.
-  breachRefreshTimeout: null,
-  kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
-  kDefaultBreachRefreshTimeout: 24 * 60 * 60 * 1000, // 24 hours
-
-  // This is here for documentation, will be redefined to a pref getter
-  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
   // The value of this property is used as the URL to which the user
   // is directed when they click "Check Firefox Monitor".
   FirefoxMonitorURL: null,
   kFirefoxMonitorURLPref: "extensions.fxmonitor.FirefoxMonitorURL",
   kDefaultFirefoxMonitorURL: "https://monitor.firefox.com",
+
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The pref stores whether the user has seen a breach alert already.
+  // The value is used in warnIfNeeded.
+  firstAlertShown: null,
+  kFirstAlertShownPref: "extensions.fxmonitor.firstAlertShown",
+
+  kDebugPref: "extensions.fxmonitor.debug",
+  get debug() {
+    return Preferences.get(this.kDebugPref, false);
+  },
 
   disable() {
     Preferences.set(this.kEnabledPref, false);
@@ -136,14 +132,11 @@ this.FirefoxMonitor = {
       }
     }
 
-    XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
-      this.kBreachListURLPref, this.getURL("assets/breaches.json"));
-
-    XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
-      this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
-
     XPCOMUtils.defineLazyPreferenceGetter(this, "FirefoxMonitorURL",
       this.kFirefoxMonitorURLPref, this.kDefaultFirefoxMonitorURL);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "firstAlertShown",
+      this.kFirstAlertShownPref, false);
 
     await this.loadStrings();
     await this.loadBreaches();
@@ -156,9 +149,15 @@ this.FirefoxMonitor = {
     // accepts. moz-extension: is not one of them, so we work around that
     // by reading the file manually and creating a data: URL (allowed).
     // TODO:
-    // - Check locale and load relevant file
     // - Optimize?
-    let response = await fetch(this.getURL("locales/en_US/strings.properties"));
+    let response;
+    try {
+      let locale = Services.locale.defaultLocale;
+      response = await fetch(this.getURL(`locales/${locale}/strings.properties`));
+    } catch (e) {
+      Cu.reportError("Firefox Monitor: no strings available for default locale. Falling back to en-US.");
+      response = await fetch(this.getURL(`locales/en-US/strings.properties`));
+    }
     let buffer = await response.arrayBuffer();
     let binary = "";
     let bytes = new Uint8Array(buffer);
@@ -170,45 +169,34 @@ this.FirefoxMonitor = {
     this.strings = Services.strings.createBundle(`data:text/plain;base64,${b64}`);
   },
 
-  _loadBreachesTimer: null,
-  _breachesLastModified: 0,
+  kRemoteSettingsKey: "fxmonitor-breaches",
   async loadBreaches() {
-    let response;
-    try {
-      response = await fetch(this.breachListURL, {
-        credentials: "omit",
-        headers: {
-          "If-Modified-Since": this._breachesLastModified,
-        },
+    const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
+
+    let populateSites = (data) => {
+      this.domainMap.clear();
+      data.forEach(site => {
+        this.domainMap.set(site.Domain, {
+          Name: site.Name,
+          PwnCount: site.PwnCount,
+          Year: (new Date(site.BreachDate)).getFullYear(),
+          AddedDate: site.AddedDate.split("T")[0],
+        });
       });
-    } catch (e) {
-      // Fetch only rejects on network failures or other anomalies;
-      // response will be undefined and we'll return early.
     }
 
-    // Arm the refresh timer already, since we may return early if we 304'd.
-    // Commented out for now since we are packaging breaches in the addon.
-    // this._loadBreachesTimer = setTimeout(() => this.loadBreaches(), this.breachRefreshTimeout);
-
-    // If the list hasn't been updated since we last checked, the server
-    // will send a 304 response. In any case, we don't handle anything
-    // except a 200 OK.
-    if (!response || response.status !== 200) {
-      return;
-    }
-
-    this._breachesLastModified = response.headers.get("Last-Modified") || new Date().toUTCString();
-
-    let sites = await response.json();
-
-    this.domainMap.clear();
-    sites.forEach(site => {
-      this.domainMap.set(site.Domain, {
-        Name: site.Name,
-        PwnCount: site.PwnCount,
-        Year: (new Date(site.BreachDate)).getFullYear(),
-      });
+    RemoteSettings(this.kRemoteSettingsKey).on("sync", (event) => {
+      const { data: { current } } = event;
+      populateSites(current);
     });
+
+    const data = await RemoteSettings(this.kRemoteSettingsKey).get();
+    if (data && data.length) {
+      populateSites(data);
+    } else if (this.debug) {
+      // Force a sync if we're debugging. This will trigger the on("sync") callback.
+      RemoteSettings(this.kRemoteSettingsKey).maybeSync(Infinity, Date.now());
+    }
   },
 
   // nsIWebProgressListener implementation.
@@ -284,7 +272,7 @@ this.FirefoxMonitor = {
         let img = doc.createElementNS(XUL_NS, "image");
         img.setAttribute("role", "button");
         img.classList.add(`${this.kNotificationID}-icon`);
-        img.style.listStyleImage = `url(${this.getURL("assets/alert.svg")})`;
+        img.style.listStyleImage = `url(${this.getURL("assets/monitor32.svg")})`;
         box2.appendChild(img);
         box.appendChild(box2);
         img.setAttribute("tooltiptext",
@@ -346,16 +334,30 @@ this.FirefoxMonitor = {
 
     EveryWindow.unregisterCallback(this.kNotificationID);
 
-    if (this._loadBreachesTimer) {
-      clearTimeout(this._loadBreachesTimer);
-    }
-
     this.observerAdded = false;
   },
 
   warnIfNeeded(browser, host) {
     if (!this.enabled || this.warnedHostsSet.has(host) || !this.domainMap.has(host)) {
       return;
+    }
+
+    let site = this.domainMap.get(host);
+
+    // We only alert for breaches that were found up to 2 months ago,
+    // except for the very first alert we show the user - in which case,
+    // we include breaches found in the last three years.
+    let breachDateThreshold = new Date();
+    if (this.firstAlertShown) {
+      breachDateThreshold.setMonth(breachDateThreshold.getMonth() - 2);
+    } else {
+      breachDateThreshold.setFullYear(breachDateThreshold.getFullYear() - 3);
+    }
+
+    if (new Date(site.AddedDate).getTime() < breachDateThreshold.getTime()) {
+      return;
+    } else if (!this.firstAlertShown) {
+      Preferences.set(this.kFirstAlertShownPref, true);
     }
 
     this.warnedHostsSet.add(host);
@@ -369,7 +371,7 @@ this.FirefoxMonitor = {
     let populatePanel = (event) => {
       switch (event) {
         case "showing":
-          panelUI.refresh(this.domainMap.get(host));
+          panelUI.refresh(site);
           if (animatedOnce) {
             // If we've already animated once for this site, don't animate again.
             doc.getElementById("notification-popup")
@@ -403,7 +405,7 @@ this.FirefoxMonitor = {
         persistent: true,
         hideClose: true,
         eventCallback: populatePanel,
-        popupIconURL: this.getURL("assets/alert.svg")
+        popupIconURL: this.getURL("assets/monitor32.svg")
       }
     );
 
