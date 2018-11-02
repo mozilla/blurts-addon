@@ -31,22 +31,6 @@ this.FirefoxMonitor = {
 
   // This is here for documentation, will be redefined to a pref getter
   // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
-  // The value of this property is used as the URL from which to fetch
-  // the list of breached sites.
-  breachListURL: null,
-  kBreachListURLPref: "extensions.fxmonitor.breachListURL",
-  kDefaultBreachListURL: null,
-
-  // This is here for documentation, will be redefined to a pref getter
-  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
-  // The value of this property is used as the timeout after which to
-  // refresh our list of breached sites.
-  breachRefreshTimeout: null,
-  kBreachRefreshTimeoutPref: "extensions.fxmonitor.breachRefreshTimeout",
-  kDefaultBreachRefreshTimeout: 24 * 60 * 60 * 1000, // 24 hours
-
-  // This is here for documentation, will be redefined to a pref getter
-  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
   // The value of this property is used as the URL to which the user
   // is directed when they click "Check Firefox Monitor".
   FirefoxMonitorURL: null,
@@ -147,12 +131,6 @@ this.FirefoxMonitor = {
         Preferences.reset(this.kWarnedHostsPref);
       }
     }
-
-    XPCOMUtils.defineLazyPreferenceGetter(this, "breachListURL",
-      this.kBreachListURLPref, this.getURL("assets/breaches.json"));
-
-    XPCOMUtils.defineLazyPreferenceGetter(this, "breachRefreshTimeout",
-      this.kBreachRefreshTimeoutPref, this.kDefaultBreachRefreshTimeout);
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "FirefoxMonitorURL",
       this.kFirefoxMonitorURLPref, this.kDefaultFirefoxMonitorURL);
