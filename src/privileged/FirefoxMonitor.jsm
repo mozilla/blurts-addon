@@ -55,7 +55,7 @@ this.FirefoxMonitor = {
 
   kDebugPref: "extensions.fxmonitor.debug",
   get debug() {
-    return Preferences.get(this.kDebugPref, false),
+    return Preferences.get(this.kDebugPref, false);
   },
 
   disable() {
@@ -186,6 +186,7 @@ this.FirefoxMonitor = {
           Name: site.Name,
           PwnCount: site.PwnCount,
           Year: (new Date(site.BreachDate)).getFullYear(),
+          AddedDate: site.AddedDate.split("T")[0],
         });
       });
     }
@@ -198,8 +199,7 @@ this.FirefoxMonitor = {
     const data = await RemoteSettings(this.kRemoteSettingsKey).get();
     if (data && data.length) {
       populateSites(data);
-    }
-    else if (this.debug) {
+    } else if (this.debug) {
       // Force a sync if we're debugging. This will trigger the on("sync") callback.
       RemoteSettings(this.kRemoteSettingsKey).maybeSync(Infinity, Date.now());
     }
@@ -278,7 +278,7 @@ this.FirefoxMonitor = {
         let img = doc.createElementNS(XUL_NS, "image");
         img.setAttribute("role", "button");
         img.classList.add(`${this.kNotificationID}-icon`);
-        img.style.listStyleImage = `url(${this.getURL("assets/alert.svg")})`;
+        img.style.listStyleImage = `url(${this.getURL("assets/monitor32.svg")})`;
         box2.appendChild(img);
         box.appendChild(box2);
         img.setAttribute("tooltiptext",
@@ -343,8 +343,27 @@ this.FirefoxMonitor = {
     this.observerAdded = false;
   },
 
+  kFirstAlertShownPref: "extensions.fxmonitor.firstAlertShown",
+  get firstAlertShown() {
+    delete this.firstAlertShown;
+    return this.firstAlertShown = Preferences.get(this.kFirstAlertShownPref, false);
+  },
+
   warnIfNeeded(browser, host) {
     if (!this.enabled || this.warnedHostsSet.has(host) || !this.domainMap.has(host)) {
+      return;
+    }
+
+    let site = this.domainMap.get(host);
+
+    let breachDateThreshold = new Date();
+    if (this.firstAlertShown) {
+      breachDateThreshold.setMonth(breachDateThreshold.getMonth() - 2);
+    } else {
+      breachDateThreshold.setFullYear(breachDateThreshold.getFullYear() - 3);
+    }
+
+    if (new Date(site.AddedDate).getTime() < breachDateThreshold.getTime()) {
       return;
     }
 
@@ -359,7 +378,7 @@ this.FirefoxMonitor = {
     let populatePanel = (event) => {
       switch (event) {
         case "showing":
-          panelUI.refresh(this.domainMap.get(host));
+          panelUI.refresh(site);
           if (animatedOnce) {
             // If we've already animated once for this site, don't animate again.
             doc.getElementById("notification-popup")
@@ -393,7 +412,7 @@ this.FirefoxMonitor = {
         persistent: true,
         hideClose: true,
         eventCallback: populatePanel,
-        popupIconURL: this.getURL("assets/alert.svg")
+        popupIconURL: this.getURL("assets/monitor32.svg")
       }
     );
 
