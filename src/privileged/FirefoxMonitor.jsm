@@ -53,6 +53,13 @@ this.FirefoxMonitor = {
   kFirefoxMonitorURLPref: "extensions.fxmonitor.FirefoxMonitorURL",
   kDefaultFirefoxMonitorURL: "https://monitor.firefox.com",
 
+  // This is here for documentation, will be redefined to a pref getter
+  // using XPCOMUtils.defineLazyPreferenceGetter in delayedInit().
+  // The pref stores whether the user has seen a breach alert already.
+  // The value is used in warnIfNeeded.
+  firstAlertShown: null,
+  kFirstAlertShownPref: "extensions.fxmonitor.firstAlertShown",
+
   kDebugPref: "extensions.fxmonitor.debug",
   get debug() {
     return Preferences.get(this.kDebugPref, false);
@@ -149,6 +156,9 @@ this.FirefoxMonitor = {
 
     XPCOMUtils.defineLazyPreferenceGetter(this, "FirefoxMonitorURL",
       this.kFirefoxMonitorURLPref, this.kDefaultFirefoxMonitorURL);
+
+    XPCOMUtils.defineLazyPreferenceGetter(this, "firstAlertShown",
+      this.kFirstAlertShownPref, false);
 
     await this.loadStrings();
     await this.loadBreaches();
@@ -343,12 +353,6 @@ this.FirefoxMonitor = {
     this.observerAdded = false;
   },
 
-  kFirstAlertShownPref: "extensions.fxmonitor.firstAlertShown",
-  get firstAlertShown() {
-    delete this.firstAlertShown;
-    return this.firstAlertShown = Preferences.get(this.kFirstAlertShownPref, false);
-  },
-
   warnIfNeeded(browser, host) {
     if (!this.enabled || this.warnedHostsSet.has(host) || !this.domainMap.has(host)) {
       return;
@@ -356,6 +360,9 @@ this.FirefoxMonitor = {
 
     let site = this.domainMap.get(host);
 
+    // We only alert for breaches that were found up to 2 months ago,
+    // except for the very first alert we show the user - in which case,
+    // we include breaches found in the last three years.
     let breachDateThreshold = new Date();
     if (this.firstAlertShown) {
       breachDateThreshold.setMonth(breachDateThreshold.getMonth() - 2);
@@ -365,6 +372,8 @@ this.FirefoxMonitor = {
 
     if (new Date(site.AddedDate).getTime() < breachDateThreshold.getTime()) {
       return;
+    } else if (!this.firstAlertShown) {
+      Preferences.set(this.kFirstAlertShownPref, true);
     }
 
     this.warnedHostsSet.add(host);
