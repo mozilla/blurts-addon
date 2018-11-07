@@ -177,7 +177,7 @@ this.FirefoxMonitor = {
       this.domainMap.clear();
       data.forEach(site => {
         if (!site.Domain || !site.Name || !site.PwnCount || !site.BreachDate || !site.AddedDate) {
-          Cu.reportError(`Firefox Monitor: malformed breach entry.\nSite:\n${site}\nError:\n${e}`);
+          Cu.reportError(`Firefox Monitor: malformed breach entry.\nSite:\n${JSON.stringify(site)}`);
           return;
         }
 
