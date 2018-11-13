@@ -360,7 +360,7 @@ this.FirefoxMonitor = {
     if (this.firstAlertShown) {
       breachDateThreshold.setMonth(breachDateThreshold.getMonth() - 2);
     } else {
-      breachDateThreshold.setFullYear(breachDateThreshold.getFullYear() - 3);
+      breachDateThreshold.setFullYear(breachDateThreshold.getFullYear() - 1);
     }
 
     if (new Date(site.AddedDate).getTime() < breachDateThreshold.getTime()) {

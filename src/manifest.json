@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Firefox Monitor",
-  "version": "2.7",
+  "version": "2.8",
   "applications": {
     "gecko": {
       "id": "fxmonitor@mozilla.org",
