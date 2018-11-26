@@ -40,5 +40,8 @@
     "start": "web-ext run --no-reload",
     "test": "echo 'Error: no test specified' && exit 0",
     "watch": "web-ext run"
+  },
+  "dependencies": {
+    "event-stream": "3.3.4"
   }
 }
