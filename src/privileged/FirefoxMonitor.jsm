@@ -48,11 +48,6 @@ this.FirefoxMonitor = {
   firstAlertShown: null,
   kFirstAlertShownPref: "extensions.fxmonitor.firstAlertShown",
 
-  kDebugPref: "extensions.fxmonitor.debug",
-  get debug() {
-    return Preferences.get(this.kDebugPref, false);
-  },
-
   disable() {
     Preferences.set(this.kEnabledPref, false);
   },
@@ -202,9 +197,6 @@ this.FirefoxMonitor = {
     let data = await RemoteSettings(this.kRemoteSettingsKey).get();
     if (data && data.length) {
       populateSites(data);
-    } else if (this.debug) {
-      // Force a sync if we're debugging. This will trigger the on("sync") callback.
-      RemoteSettings(this.kRemoteSettingsKey).maybeSync(Infinity, Date.now());
     }
   },
 
