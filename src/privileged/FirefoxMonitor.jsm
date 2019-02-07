@@ -152,8 +152,6 @@ this.FirefoxMonitor = {
     // Services.strings.createBundle has a whitelist of URL schemes that it
     // accepts. moz-extension: is not one of them, so we work around that
     // by reading the file manually and creating a data: URL (allowed).
-    // TODO:
-    // - Optimize?
     let response;
     try {
       let locale = Services.locale.defaultLocale;
