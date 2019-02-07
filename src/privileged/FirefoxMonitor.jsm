@@ -204,9 +204,9 @@ this.FirefoxMonitor = {
 
   // nsIWebProgressListener implementation.
   onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-    if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
-        (!aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
-         !Components.isSuccessCode(aStatus))) {
+    if (!(aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) ||
+        !aWebProgress.isTopLevel || aWebProgress.isLoadingDocument ||
+        !Components.isSuccessCode(aStatus)) {
       return;
     }
 
