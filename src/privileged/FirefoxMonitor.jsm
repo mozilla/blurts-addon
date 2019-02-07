@@ -114,11 +114,13 @@ this.FirefoxMonitor = {
           "dismiss_btn",
           "never_show_btn",
         ],
-        record_on_release: true,
+        // Disabled for now.
+        record_on_release: false,
       },
     });
 
-    Services.telemetry.setEventRecordingEnabled("fxmonitor", true);
+    // Disabled for now.
+    Services.telemetry.setEventRecordingEnabled("fxmonitor", false);
 
     let warnedHostsJSON = Preferences.get(this.kWarnedHostsPref, "");
     if (warnedHostsJSON) {
