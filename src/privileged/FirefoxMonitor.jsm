@@ -97,7 +97,7 @@ this.FirefoxMonitor = {
       return;
     }
 
-    /* globals Preferences, fetch, btoa, XUL_NS */
+    /* globals Preferences, RemoteSettings, fetch, btoa, XUL_NS */
     Services.scriptloader.loadSubScript(
       this.getURL("privileged/subscripts/Globals.jsm"));
 
@@ -173,8 +173,6 @@ this.FirefoxMonitor = {
 
   kRemoteSettingsKey: "fxmonitor-breaches",
   async loadBreaches() {
-    const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
-
     let populateSites = (data) => {
       this.domainMap.clear();
       data.forEach(site => {

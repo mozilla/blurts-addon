@@ -8,6 +8,8 @@ ChromeUtils.defineModuleGetter(this, "Preferences",
                                "resource://gre/modules/Preferences.jsm");
 ChromeUtils.defineModuleGetter(this, "PluralForm",
                                "resource://gre/modules/PluralForm.jsm");
+ChromeUtils.defineModuleGetter(this, "RemoteSettings",
+                               "resource://services-settings/remote-settings.js");
 const {setTimeout, clearTimeout} = ChromeUtils.import("resource://gre/modules/Timer.jsm", {});
 Cu.importGlobalProperties(["fetch", "btoa"]);
 
