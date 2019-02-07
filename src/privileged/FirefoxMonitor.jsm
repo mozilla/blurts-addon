@@ -153,11 +153,11 @@ this.FirefoxMonitor = {
     // accepts. moz-extension: is not one of them, so we work around that
     // by reading the file manually and creating a data: URL (allowed).
     let response;
+    let locale = Services.locale.defaultLocale;
     try {
-      let locale = Services.locale.defaultLocale;
       response = await fetch(this.getURL(`locale/${locale}/strings.properties`));
     } catch (e) {
-      Cu.reportError("Firefox Monitor: no strings available for default locale. Falling back to en-US.");
+      Cu.reportError(`Firefox Monitor: no strings available for ${locale}. Falling back to en-US.`);
       response = await fetch(this.getURL(`locale/en-US/strings.properties`));
     }
     let buffer = await response.arrayBuffer();
