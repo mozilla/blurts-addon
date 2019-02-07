@@ -10,9 +10,7 @@ function PanelUI(doc) {
 
   let box = doc.createElementNS(XUL_NS, "vbox");
 
-  let elt;
-
-  elt = doc.createElementNS(XUL_NS, "description");
+  let elt = doc.createElementNS(XUL_NS, "description");
   elt.textContent = this.getString("fxmonitor.popupHeader");
   elt.classList.add("headerText");
   box.appendChild(elt);
