@@ -157,10 +157,10 @@ this.FirefoxMonitor = {
     let response;
     try {
       let locale = Services.locale.defaultLocale;
-      response = await fetch(this.getURL(`locales/${locale}/strings.properties`));
+      response = await fetch(this.getURL(`locale/${locale}/strings.properties`));
     } catch (e) {
       Cu.reportError("Firefox Monitor: no strings available for default locale. Falling back to en-US.");
-      response = await fetch(this.getURL(`locales/en-US/strings.properties`));
+      response = await fetch(this.getURL(`locale/en-US/strings.properties`));
     }
     let buffer = await response.arrayBuffer();
     let binary = "";
