@@ -195,11 +195,11 @@ this.FirefoxMonitor = {
     };
 
     RemoteSettings(this.kRemoteSettingsKey).on("sync", (event) => {
-      const { data: { current } } = event;
+      let { data: { current } } = event;
       populateSites(current);
     });
 
-    const data = await RemoteSettings(this.kRemoteSettingsKey).get();
+    let data = await RemoteSettings(this.kRemoteSettingsKey).get();
     if (data && data.length) {
       populateSites(data);
     } else if (this.debug) {
