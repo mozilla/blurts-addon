@@ -232,11 +232,6 @@ this.FirefoxMonitor = {
       (win) => {
         // Inject our stylesheet.
         let DOMWindowUtils = win.windowUtils;
-        if (!DOMWindowUtils) {
-          // win.windowUtils was added in 63, fallback if it's not available.
-          DOMWindowUtils = win.QueryInterface(Ci.nsIInterfaceRequestor)
-                              .getInterface(Ci.nsIDOMWindowUtils);
-        }
         DOMWindowUtils.loadSheetUsingURIString(this.getURL("privileged/FirefoxMonitor.css"),
                                                DOMWindowUtils.AUTHOR_SHEET);
 
