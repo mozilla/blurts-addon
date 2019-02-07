@@ -1,4 +1,4 @@
-/* globals XUL_NS */
+/* globals XUL_NS, Services, PluralForm */
 
 function PanelUI(doc) {
   this.site = null;

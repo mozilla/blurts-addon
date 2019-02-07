@@ -192,7 +192,7 @@ this.FirefoxMonitor = {
           Cu.reportError(`Firefox Monitor: malformed breach entry.\nSite:\n${JSON.stringify(site)}\nError:\n${e}`);
         }
       });
-    }
+    };
 
     RemoteSettings(this.kRemoteSettingsKey).on("sync", (event) => {
       const { data: { current } } = event;
@@ -414,7 +414,7 @@ this.FirefoxMonitor = {
         persistent: true,
         hideClose: true,
         eventCallback: populatePanel,
-        popupIconURL: this.getURL("assets/monitor32.svg")
+        popupIconURL: this.getURL("assets/monitor32.svg"),
       }
     );
 

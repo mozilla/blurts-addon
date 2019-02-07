@@ -1,5 +1,5 @@
-"use strict";
+/* eslint-env webextensions */
 
-/* globals browser */
+"use strict";
 
 browser.fxmonitor.start();
