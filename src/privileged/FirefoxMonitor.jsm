@@ -69,12 +69,12 @@ this.FirefoxMonitor = {
     return this.strings.formatStringFromName(aKey, args, args.length);
   },
 
-  async init(aExtension) {
+  init(aExtension) {
     this.extension = aExtension;
 
     XPCOMUtils.defineLazyPreferenceGetter(
       this, "enabled", this.kEnabledPref, false,
-      async (pref, oldVal, newVal) => {
+      (pref, oldVal, newVal) => {
         if (newVal) {
           this.startObserving();
         } else {
