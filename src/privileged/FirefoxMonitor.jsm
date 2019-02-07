@@ -258,20 +258,20 @@ this.FirefoxMonitor = {
 
         // Setup the popup notification stuff. First, the URL bar icon:
         let doc = win.document;
-        let box = doc.getElementById("notification-popup-box");
+        let notificationBox = doc.getElementById("notification-popup-box");
         // We create a box to use as the anchor, and put an icon image
         // inside it. This way, when we animate the icon, its scale change
         // does not cause the popup notification to bounce due to the anchor
         // point moving.
-        let box2 = doc.createElementNS(XUL_NS, "box");
-        box2.setAttribute("id", `${this.kNotificationID}-notification-anchor`);
-        box2.classList.add("notification-anchor-icon");
+        let anchorBox = doc.createElementNS(XUL_NS, "box");
+        anchorBox.setAttribute("id", `${this.kNotificationID}-notification-anchor`);
+        anchorBox.classList.add("notification-anchor-icon");
         let img = doc.createElementNS(XUL_NS, "image");
         img.setAttribute("role", "button");
         img.classList.add(`${this.kNotificationID}-icon`);
         img.style.listStyleImage = `url(${this.getURL("assets/monitor32.svg")})`;
-        box2.appendChild(img);
-        box.appendChild(box2);
+        anchorBox.appendChild(img);
+        notificationBox.appendChild(anchorBox);
         img.setAttribute("tooltiptext",
           this.getFormattedString("fxmonitor.anchorIcon.tooltiptext",
                                   [this.getString("fxmonitor.brandName")]));
